@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<!--
+ CLEAN HANDOFF VERSION
+ Purpose: Math 7 Statistics original-vs-revised assessment review tool.
+ Architecture: Single self-contained HTML file; no external libraries, APIs, network calls, or storage dependencies.
+ Interaction code: Vanilla JavaScript only.
+ Content: Assessment-specific IDs, AIDs, prompts, answer keys, and TEI review interactions are intentionally preserved.
+-->
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+<title>Math 7 Statistics — Interactive Assessment Review</title>
+<style id="assessment-review-styles">
+/* =========================================================
+   Math 7 Statistics — Consistent Handoff Styles
+   One visual system is used across all tabs and item types.
+   ========================================================= */
+:root{
+  --blue:#0c5b91;
+  --blue-2:#1574d4;
+  --blue-soft:#eef4fa;
+  --page:#f4f7fa;
+  --surface:#ffffff;
+  --text:#222222;
+  --muted:#667085;
+  --border:#cfd8e3;
+  --border-dark:#aeb8c4;
+  --note:#fff8df;
+  --success:#e8f5e9;
+  --success-border:#4caf50;
+  --error:#ffebee;
+  --error-border:#ef9a9a;
+  --radius:8px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--page);color:var(--text);font-size:15px;line-height:1.45}
+.master-header{background:var(--blue);color:#fff;padding:22px 28px}
+.master-header h1{margin:0;font-size:28px;color:#fff}
+.master-header p{margin:6px 0 0;color:#dce9f6}
+.master-tabs{display:flex;flex-wrap:wrap;gap:5px;background:#fff;border-bottom:1px solid var(--border);padding:10px 12px 0;position:sticky;top:0;z-index:100}
+.master-tabs .tablink{border:1px solid var(--border);border-bottom:0;background:var(--blue-soft);color:var(--blue);padding:11px 14px;border-radius:7px 7px 0 0;cursor:pointer;font-weight:700;font-size:14px}
+.master-tabs .tablink:hover{background:#e3eef8}
+.master-tabs .tablink.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.lesson-tab{display:none;padding:22px 18px}.lesson-tab.active{display:block}
+.embedded-lesson{max-width:1200px;margin:0 auto;background:transparent}
+.embedded-lesson>h1,.unit-test-tab>h1{margin:0;color:var(--blue);font-size:26px}
+.lesson-subtitle{color:#555;margin:5px 0 22px;font-size:15px}
+
+/* Shared tables */
+table{border-collapse:collapse}
+.item-detail,.summary,.tracking,.data,.data-table,.matrix{width:100%;margin:12px 0 24px}
+.item-detail th,.item-detail td,.summary th,.summary td,.tracking th,.tracking td,.data th,.data td,.data-table th,.data-table td,.matrix th,.matrix td{border:1px solid var(--border);padding:9px 10px;vertical-align:top}
+.item-detail th,.summary th,.tracking th{background:var(--blue);color:#fff;text-align:left}
+.item-detail tr:nth-child(even) td,.summary tr:nth-child(even) td,.tracking tr:nth-child(even) td{background:#f6f9fc}
+.data th,.data-table th{background:var(--blue-soft);color:var(--blue);font-weight:700}
+.data th,.data td,.data-table th,.data-table td{text-align:center}
+.matrix th{background:var(--blue-soft);color:var(--blue);text-align:center}.matrix th:first-child,.matrix td:first-child{text-align:left}
+.matrix td:not(:first-child){text-align:center}
+.tracking{font-size:13px;margin-bottom:34px}.tracking .changed{color:var(--blue);font-weight:700}.tracking .unchanged{color:var(--muted)}.tracking td.aid{white-space:nowrap;font-weight:700}
+.section-h2{color:var(--blue);margin:30px 0 14px;border-bottom:2px solid var(--blue);padding-bottom:6px}
+
+/* Shared item cards */
+.item,.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin:0 0 26px;overflow:hidden}
+.item-title,.title,.head{background:var(--blue)!important;color:#fff!important;padding:12px 16px!important;font-weight:700!important}
+.head h2{font-size:16px;margin:0;color:#fff}.title .intent{font-weight:400;font-size:12px;opacity:.88}
+.item-intent{padding:9px 16px;background:var(--blue-soft);border-bottom:1px solid var(--border);font-size:13px;color:#495568;font-style:italic}
+.compare,.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.side,.col{padding:18px;min-width:0}.side+.side,.col+.col{border-left:1px solid var(--border)}
+.label{font-size:12px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;color:var(--blue-2);margin-bottom:7px}
+.type,.badge,.tag{display:inline-block;background:var(--blue-soft);color:var(--blue);border:1px solid #d9e7f4;padding:5px 8px;border-radius:4px;font-size:12px;font-weight:700;margin:0 0 12px}
+.stem{margin:8px 0 14px;line-height:1.5}.choice{display:block;margin:10px 0}.answer{background:#f5f5f5;padding:10px;margin-top:12px;border-left:4px solid #9aa6b2}
+.note{background:var(--note);border-left:4px solid #d6a400;padding:10px 12px;margin-top:14px;font-size:13px;line-height:1.45}
+.key{font-size:13px;margin-top:10px;font-weight:700;color:var(--blue)}
+.correct-answer-embedded{margin:0 18px 18px;padding:12px 14px;background:var(--success);border-left:4px solid var(--success-border);border-radius:4px;font-size:14px;line-height:1.5}.correct-answer-embedded strong{color:#216b2b}
+.part{border:1px solid var(--border);border-radius:6px;padding:14px;margin:14px 0}.part-label{font-weight:700;color:var(--blue);margin-bottom:8px}
+
+/* Inputs and controls */
+select{font:inherit;padding:6px 8px;border:1px solid #aab7c4;border-radius:4px;max-width:100%;background:#fff}
+.actions,.tei-actions,.fixed-class-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.actions button,.tei-actions button,.fixed-class-actions button{background:var(--blue);color:#fff;border:0;border-radius:4px;padding:8px 12px;cursor:pointer;font-size:13px;font-weight:700}
+.actions button.secondary,.tei-actions button.secondary,.fixed-class-actions button.secondary{background:#6c757d}
+.feedback,.tei-feedback,.fixed-class-feedback,.q04-feedback{margin-top:9px;font-weight:700;color:var(--blue);font-size:14px;min-height:18px}.tei-feedback.ok{color:#216b2b}.tei-feedback.bad{color:#b42318}
+.matrix input[type=radio]{width:18px;height:18px;cursor:pointer}
+.correct-cell,select.tei-correct{background:var(--success)!important;border-color:var(--success-border)!important}.incorrect-cell,select.tei-incorrect{background:var(--error)!important;border-color:var(--error-border)!important}
+
+/* Drag-and-drop — shared visual language */
+.bank,.classification-bank,.drag-bank,.fixed-class-bank,.q04-class-bank{display:flex;flex-wrap:wrap;gap:8px;padding:12px;background:#f5f7fa;border:1px solid #d7dde5;border-radius:6px;margin:12px 0;min-height:54px}
+.chip,.drag-chip,.fixed-class-chip,.q04-class-chip{display:inline-block;padding:9px 11px;background:#fff;border:2px solid #8da4b8;border-radius:6px;font-size:14px;font-weight:600;cursor:grab;user-select:none;margin:0}
+.chip.used,.drag-chip.used{opacity:.35}.chip.tei-correct,.fixed-class-chip.good,.q04-class-chip.good{background:var(--success);border-color:var(--success-border)}.chip.tei-incorrect,.fixed-class-chip.bad,.q04-class-chip.bad{background:var(--error);border-color:var(--error-border)}
+.class-grid,.cols,.q04-class-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+.class-col,.col.q04-class-zone,.q04-class-zone{border:1px solid #b8cbe0;border-radius:6px;min-height:100px;padding:0;overflow:hidden}
+.class-head,.q04-class-head{background:var(--blue-soft);padding:8px;text-align:center;font-weight:700;color:var(--blue);font-size:13px;margin:0}
+.class-drop,.drop,.fixed-class-zone,.q04-class-zone{min-height:82px;padding:10px;color:var(--muted);text-align:center}
+.class-drop.drag-over,.drop.drag-over,.fixed-class-zone.drag-over,.q04-class-zone.drag-over{background:#f0f7ff;outline:2px dashed var(--blue-2);outline-offset:-4px}
+.fixed-class-placeholder{color:#7a8694;font-size:13px;padding:18px 4px}
+.fixed-class-zone .fixed-class-chip,.class-drop .chip,.drop .chip{display:block;text-align:left;margin:6px 0}
+
+/* Match list, cloze association, order list */
+.match-row{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:10px;align-items:center;border-bottom:1px solid #e1e5ea;padding:10px 0}
+.dropzone,.match-dropzone,.cloze-dropzone,.grouped-dropzone{min-height:40px;border:2px dashed #9aa9bd;background:#fff;border-radius:5px;padding:8px 9px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.cloze-dropzone,.grouped-dropzone{display:inline-flex;min-width:105px;vertical-align:middle;margin:0 4px}
+.dropzone.filled,.match-dropzone.filled,.cloze-dropzone.filled,.grouped-dropzone.filled{border-style:solid;color:var(--text);background:#f9fbfd}
+.dropzone.correct,.match-dropzone.correct,.cloze-dropzone.correct,.grouped-dropzone.correct{background:var(--success);border-color:var(--success-border)}
+.dropzone.incorrect,.match-dropzone.incorrect,.cloze-dropzone.incorrect,.grouped-dropzone.incorrect{background:var(--error);border-color:var(--error-border)}
+.group-label{font-weight:700;color:var(--blue);margin-top:10px}.cloze-sentence{font-size:15px;line-height:2.25}
+.order-direction{margin:10px 0;color:var(--blue)}.order-list{list-style:none;padding:0;margin:12px 0;max-width:100%}.order-list li{background:#fff;border:1px solid var(--border-dark);border-radius:5px;padding:10px 12px;margin:7px 0;cursor:grab;user-select:none;font-size:14px}.order-list li.dragging{opacity:.4}.order-list li.correct{background:var(--success);border-color:var(--success-border)}.order-list li.incorrect{background:var(--error);border-color:var(--error-border)}.handle{display:inline-block;margin-right:8px;color:var(--muted);font-weight:700}
+
+/* Comparing Data Distributions multipart */
+.q04-radio-option{display:flex;gap:8px;align-items:flex-start;padding:7px;border:1px solid transparent;border-radius:4px;margin:6px 0}.q04-radio-option.good{background:var(--success);border-color:var(--success-border)}.q04-radio-option.bad{background:var(--error);border-color:var(--error-border)}
+
+/* Graphing */
+.dotplot-label{font-weight:700;margin:10px 0 4px;font-size:14px}svg{max-width:610px;width:100%;display:block}.numline circle{cursor:pointer}.numline circle.selected{fill:var(--blue)}.numline circle.correct{fill:var(--success-border)}.numline circle.incorrect{fill:var(--error-border)}
+
+@media(max-width:800px){
+  .compare,.grid{grid-template-columns:1fr}.side+.side,.col+.col{border-left:0;border-top:1px solid var(--border)}
+  .class-grid,.cols,.q04-class-grid{grid-template-columns:1fr}.match-row{grid-template-columns:1fr}
+  .master-tabs{position:static}.master-tabs .tablink{flex:1 1 45%;border:1px solid var(--border);border-radius:6px;margin-bottom:4px}
+  .lesson-tab{padding:14px 10px}
+}
+
+
+/* Collapsible Master Assessment Tracking Table */
+.tracking-toggle{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:var(--blue);
+  color:#fff;
+  border:0;
+  border-radius:var(--radius);
+  padding:12px 16px;
+  cursor:pointer;
+  font:inherit;
+  font-weight:700;
+  text-align:left;
+  margin:30px 0 0;
+}
+.tracking-toggle:hover{background:#094b78}
+.tracking-toggle:focus-visible{outline:3px solid #9ecbf0;outline-offset:2px}
+.tracking-toggle .tracking-chevron{font-size:18px;transition:transform .2s ease}
+.tracking-toggle[aria-expanded="true"] .tracking-chevron{transform:rotate(180deg)}
+.tracking-panel{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-top:0;
+  border-radius:0 0 var(--radius) var(--radius);
+  padding:14px;
+  margin-bottom:24px;
+  overflow-x:auto;
+}
+.tracking-panel[hidden]{display:none}
+.tracking-panel .tracking{margin:0}
+
+</style></head>
+<body>
+<div class="master-header"><h1>Math 7 Quick Checks</h1><p>Original vs. Revised Technology-Enhanced Items</p></div>
+<div class="embedded-lesson" style="margin:20px auto 0">
+
+<button
+  class="tracking-toggle"
+  id="trackingToggle"
+  type="button"
+  aria-expanded="true"
+  aria-controls="trackingPanel"
+>
+  <span>Master Assessment Tracking Table — Statistics Unit</span>
+  <span class="tracking-chevron" aria-hidden="true">⌃</span>
+</button>
+<div class="tracking-panel" id="trackingPanel">
+<table class="tracking">
+<tr><th>Lesson Name</th><th>Assessment AID</th><th>Items on Assessment</th><th>Items Changed</th><th>Changes</th><th>Scoring</th></tr>
+<tr>
+<td>Statistics Basic</td>
+<td class="aid">A5041009</td>
+<td><span class="changed">MA.7.0122_Q04</span><br/><span class="changed">MA.7.0122_Q05</span><br/><span class="unchanged">MA.7.0123_Q03</span><br/><span class="unchanged">MA.7.0123_Q04</span><br/><span class="unchanged">MA.7.0123_Q05</span></td>
+<td>MA.7.0122_Q04<br/>MA.7.0122_Q05</td>
+<td>Changed from MC to Cloze Drop Down, same intent<br/><br/>Changed from MC to Classification, same intent</td>
+<td>Point value TBD based on Cloze Drop Down rules<br/><br/>Point value TBD based on Classification scoring</td>
+</tr>
+<tr>
+<td>Random Sampling</td>
+<td class="aid">A5041008</td>
+<td><span class="changed">MA.7.0124_Q04</span><br/><span class="changed">MA.7.0124_Q05</span><br/><span class="unchanged">MA.7.0125_Q03</span><br/><span class="unchanged">MA.7.0125_Q04</span><br/><span class="unchanged">MA.7.0125_Q05</span></td>
+<td>MA.7.0124_Q04<br/>MA.7.0124_Q05</td>
+<td>Changed from MC to Cloze Drop Down, same intent<br/><br/>Changed from MC to Classification, same intent</td>
+<td>Point value TBD based on Cloze Drop Down rules<br/><br/>Point value TBD based on Classification scoring</td>
+</tr>
+<tr>
+<td>Measures of Center</td>
+<td class="aid">A5041006</td>
+<td><span class="unchanged">MA.7.0154_Q02</span><br/><span class="unchanged">MA.7.0154_Q03</span><br/><span class="unchanged">MA.7.0155_Q03</span><br/><span class="changed">MA.7.0129_Q03</span><br/><span class="changed">MA.7.0129_Q04</span></td>
+<td>MA.7.0129_Q03<br/>MA.7.0129_Q04</td>
+<td>Changed from MC to Choice Matrix, same intent<br/><br/>Changed from MC to Choice Matrix, same intent</td>
+<td>Point value TBD based on Choice Matrix scoring<br/><br/>Point value TBD based on Choice Matrix scoring</td>
+</tr>
+<tr>
+<td>Measures of Variation</td>
+<td class="aid">A5041002</td>
+<td><span class="unchanged">MA.7.0156_Q03</span><br/><span class="changed">MA.7.0156_Q04</span><br/><span class="unchanged">MA.7.0126_Q03</span><br/><span class="unchanged">MA.7.0130_Q02</span><br/><span class="changed">MA.7.0130_Q03</span></td>
+<td>MA.7.0156_Q04<br/>MA.7.0130_Q03</td>
+<td>Changed from MC to Order List, same intent<br/><br/>Changed from MC to Cloze Association, same intent</td>
+<td>Point value TBD based on Order List scoring<br/><br/>Point value TBD based on Cloze Association scoring</td>
+</tr>
+<tr>
+<td>Comparing Data Distributions</td>
+<td class="aid">A5041001</td>
+<td><span class="unchanged">MA.7.0127_Q04</span><br/><span class="unchanged">MA.7.0127_Q05</span><br/><span class="changed">MA.7.0128_Q03</span><br/><span class="changed">MA.7.0128_Q04</span><br/><span class="unchanged">MA.7.0128_Q05</span></td>
+<td>MA.7.0128_Q03<br/>MA.7.0128_Q04</td>
+<td>Changed from MC to Cloze Drop Down, same intent<br/><br/>Changed from MC to Multiple Part Selected Response with Classification, same intent</td>
+<td>Point value TBD based on Cloze Drop Down rules<br/><br/>Point value TBD based on Multiple Part Selected Response/Classification scoring</td>
+</tr>
+<tr>
+<td>Statistics Unit Test</td>
+<td class="aid">A5041003</td>
+<td>
+<span class="changed">MA.7.0123_Q07</span><br/><span class="unchanged">MA.7.0124_Q07</span><br/><span class="unchanged">MA.7.0125_Q07</span><br/>
+<span class="changed">MA.7.0154_Q06</span><br/><span class="changed">MA.7.0155_Q05</span><br/><span class="changed">MA.7.0155_Q06</span><br/>
+<span class="changed">MA.7.0129_Q06</span><br/><span class="unchanged">MA.7.0156_Q06</span><br/><span class="unchanged">MA.7.0126_Q05</span><br/>
+<span class="unchanged">MA.7.0126_Q06</span><br/><span class="changed">MA.7.0130_Q06</span><br/><span class="changed">MA.7.0127_Q08</span><br/>
+<span class="changed">MA.7.0128_Q07</span><br/><span class="changed">MA.7.0128_Q08</span><br/><span class="unchanged">MA.7.0122_Q19_TG</span>
+</td>
+<td>
+    MA.7.0123_Q07<br/>MA.7.0154_Q06<br/>MA.7.0155_Q05<br/>MA.7.0155_Q06<br/>MA.7.0129_Q06<br/>MA.7.0130_Q06<br/>MA.7.0127_Q08<br/>MA.7.0128_Q07<br/>MA.7.0128_Q08
+  </td>
+<td>
+    Changed from MC to Classification, same intent<br/><br/>
+    Changed from Numeric Entry to Multiple Part Selected Response (Match List + Cloze Drop Down), same intent<br/><br/>
+    Changed from MC to Order List, same intent<br/><br/>
+    Changed from Numeric Entry to Cloze Drop Down, same intent<br/><br/>
+    Changed from MC to Choice Matrix, same intent<br/><br/>
+    Changed from Numeric Entry to Multiple Part Selected Response (Cloze Association + Classification), same intent<br/><br/>
+    Changed from Numeric Entry to Graphing, same intent<br/><br/>
+    Changed from Numeric Entry to Multiple Part Selected Response (Cloze Drop Down + Choice Matrix), same intent<br/><br/>
+    Changed from MC to Multiple Part Selected Response (Cloze Drop Down + Choice Matrix), same intent
+  </td>
+<td>
+    Point value TBD based on Classification scoring<br/><br/>
+    Point value TBD based on Match List/Cloze Drop Down scoring<br/><br/>
+    Point value TBD based on Order List scoring<br/><br/>
+    Point value TBD based on Cloze Drop Down rules<br/><br/>
+    Point value TBD based on Choice Matrix scoring<br/><br/>
+    Point value TBD based on Cloze Association/Classification scoring<br/><br/>
+    Point value TBD based on Graphing scoring<br/><br/>
+    Point value TBD based on Cloze Drop Down/Choice Matrix scoring<br/><br/>
+    Point value TBD based on Cloze Drop Down/Choice Matrix scoring
+  </td>
+</tr>
+</table>
+</div>
+
+</div>
+<nav class="master-tabs"><button class="tablink active" onclick="openTab(event,'tab0')">01_Statistics Basic</button>
+<button class="tablink" onclick="openTab(event,'tab1')">02_Random Sampling</button>
+<button class="tablink" onclick="openTab(event,'tab2')">03_Measures of Center</button>
+<button class="tablink" onclick="openTab(event,'tab3')">04_Measures of Variation</button>
+<button class="tablink" onclick="openTab(event,'tab4')">05_Comparing Data Distributions</button>
+<button class="tablink" onclick="openTab(event,'tab5')">06_Statistics Unit Test</button></nav>
+<section class="lesson-tab active" id="tab0"><div class="embedded-lesson">
+<h1>01_Statistics Basic</h1>
+<div class="lesson-subtitle">Original vs. Revised Technology-Enhanced Items</div>
+<table class="item-detail">
+<tr><th>Item ID</th><th>Original Type</th><th>Revised Type</th><th class="center">Category</th><th>Intent</th></tr>
+<tr><td>MA.7.0122_Q04</td><td>Multiple Choice</td><td>Cloze Drop Down</td><td class="center">Single Technology-Enhanced Item</td><td>Identify the best random sample and explain why it is representative of the population of interest.</td></tr>
+<tr><td>MA.7.0122_Q05</td><td>Multiple Choice</td><td>Classification</td><td class="center">Single Technology-Enhanced Item</td><td>Distinguish the population from the sample and from unrelated groups in a real-world context.</td></tr>
+</table>
+<section class="item">
+<div class="item-title">MA.7.0122_Q04 — Statistics Basic Quick Check, Item 1</div>
+<div class="item-intent">Intent: identify the best random sample and explain why it is representative of the population of interest.</div>
+<div class="compare">
+<div class="side">
+<div class="label">Original</div><div class="type">Original: Multiple Choice</div>
+<div class="stem">
+        You want to estimate the number of students who bring their lunch to school every day.
+        Which of the following is the best sample for this situation?
+      </div>
+<div class="choice">○ 80 students selected at random during lunch</div>
+<div class="choice">○ all members of the Math Club</div>
+<div class="choice">○ 45 first-year students selected at random</div>
+<div class="choice">○ 50 female students selected at random</div>
+</div>
+<div class="side">
+<div class="label">Revised</div><div class="type">Revised: Cloze Drop Down</div>
+<div class="stem">
+        You want to estimate the number of students who bring their lunch to school every day.
+        <br/><br/><strong>Complete the statement.</strong>
+</div>
+<p>
+        The best sample is
+        <select aria-label="Best sample">
+<option>Select...</option>
+<option>80 students selected at random during lunch</option>
+<option>all members of the Math Club</option>
+<option>45 first-year students selected at random</option>
+<option>50 female students selected at random</option>
+</select>
+        because
+        <select aria-label="Reason">
+<option>Select...</option>
+<option>the students are selected randomly from the population of interest</option>
+<option>the students all belong to the same school club</option>
+<option>the sample includes only first-year students</option>
+<option>the sample includes only female students</option>
+</select>.
+      </p>
+<div class="note"><strong>Intent preserved:</strong> Students still identify the best representative sample; the revised item also captures why that sample is appropriate.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>80 students selected at random during lunch; because the students are selected randomly from the population of interest.</div></section>
+<section class="item">
+<div class="item-title">MA.7.0122_Q05 — Statistics Basic Quick Check, Item 2</div>
+<div class="item-intent">Intent: distinguish the population from the sample and from unrelated groups in a real-world context.</div>
+<div class="compare">
+<div class="side">
+<div class="label">Original</div><div class="type">Original: Multiple Choice</div>
+<div class="stem">
+        A coffee shop owner is interested in determining what people think about a new coffee flavor.
+        Which of the following is the population in this situation?
+      </div>
+<div class="choice">○ all customers who did not buy the new coffee</div>
+<div class="choice">○ all customers who bought the new coffee</div>
+<div class="choice">○ 100 random customers</div>
+<div class="choice">○ the first 50 customers who bought the new coffee</div>
+</div>
+<div class="side">
+<div class="label">Revised</div><div class="type">Revised: Classification</div>
+<div class="stem">
+        A coffee shop owner wants to determine what customers think about a new coffee flavor.
+        The owner surveys 50 randomly selected customers who bought the new coffee.
+        <br/><br/><strong>Drag each group to the correct category.</strong>
+</div>
+<div class="classification-bank">
+<strong>Possible Responses</strong><br/>
+<span class="chip">all customers who bought the new coffee</span>
+<span class="chip">50 randomly selected customers who bought the new coffee</span>
+<span class="chip">customers who did not buy the new coffee</span>
+<span class="chip">the first 10 employees who arrived at the coffee shop</span>
+</div>
+<div class="class-grid">
+<div class="class-col"><div class="class-head">Population</div><div class="drop">Drop response here</div></div>
+<div class="class-col"><div class="class-head">Sample</div><div class="drop">Drop response here</div></div>
+<div class="class-col"><div class="class-head">Neither</div><div class="drop">Drop responses here</div></div>
+</div>
+<div class="note"><strong>Intent preserved and extended:</strong> Students still identify the population in the same context, while also distinguishing the sample and unrelated groups.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>Population: all customers who bought the new coffee. Sample: 50 randomly selected customers who bought the new coffee. Neither: customers who did not buy the new coffee; the first 10 employees who arrived at the coffee shop.</div></section>
+</div></section><section class="lesson-tab" id="tab1"><div class="embedded-lesson">
+<h1>02_Random Sampling</h1>
+<div class="lesson-subtitle">Original vs. Revised Technology-Enhanced Items</div>
+<table class="item-detail">
+<tr><th>Item ID</th><th>Original Type</th><th>Revised Type</th><th class="center">Category</th><th>Intent</th></tr>
+<tr><td>MA.7.0124_Q04</td><td>Multiple Choice</td><td>Cloze Drop Down</td><td class="center">Single Technology-Enhanced Item</td><td>Determine whether a sampling method supports a valid inference and explain why it is or isn't representative.</td></tr>
+<tr><td>MA.7.0124_Q05</td><td>Multiple Choice</td><td>Classification</td><td class="center">Single Technology-Enhanced Item</td><td>Evaluate multiple sampling methods to determine which are likely to lead to a valid inference.</td></tr>
+</table>
+<section class="item">
+<div class="item-title">MA.7.0124_Q04 — Random Sampling Quick Check, Item 1</div>
+<div class="item-intent">Intent: determine whether a sampling method supports a valid inference and explain why it is or isn't representative.</div>
+<div class="compare">
+<div class="side">
+<div class="label">Original</div><div class="type">Original: Multiple Choice</div>
+<div class="stem">
+        A store manager wants to know the percentage of shoppers who use coupons. He surveys everyone who enters the meat aisle. He finds that 60 percent of shoppers use coupons. Does the sampling method the store manager used support a valid inference?
+      </div>
+<div class="choice">○ Yes, because the manager asked everyone who entered the meat aisle.</div>
+<div class="choice">○ No, because not all people who enter the meat aisle use coupons.</div>
+<div class="choice">○ No, because the sample is not chosen randomly.</div>
+<div class="choice">○ Yes, because the sample contains coupon users and non-users.</div>
+</div>
+<div class="side">
+<div class="label">Revised</div><div class="type">Revised: Cloze Drop Down</div>
+<div class="stem">
+        A store manager wants to know the percentage of shoppers who use coupons. He surveys everyone who enters the meat aisle and finds that 60 percent of shoppers use coupons.
+        <br/><br/><strong>Complete the statement.</strong>
+</div>
+<p>
+        The sampling method
+        <select aria-label="Validity">
+<option>Select...</option>
+<option>does</option>
+<option>does not</option>
+</select>
+        support a valid inference because
+        <select aria-label="Reason">
+<option>Select...</option>
+<option>the shoppers entering the meat aisle were not chosen randomly from all shoppers</option>
+<option>everyone entering the meat aisle was surveyed</option>
+<option>the sample contains both coupon users and non-users</option>
+</select>.
+      </p>
+<div class="note"><strong>Intent preserved:</strong> Students still determine whether the sampling method supports a valid inference and identify the reason the sample is not representative.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>does not; because the shoppers entering the meat aisle were not chosen randomly from all shoppers.</div></section>
+<section class="item">
+<div class="item-title">MA.7.0124_Q05 — Random Sampling Quick Check, Item 2</div>
+<div class="item-intent">Intent: evaluate multiple sampling methods to determine which are likely to lead to a valid inference.</div>
+<div class="compare">
+<div class="side">
+<div class="label">Original</div><div class="type">Original: Multiple Choice</div>
+<div class="stem">
+        A quality control manager wants to determine the percentage of defective light bulbs in the production line. Which of the following sampling methods would most likely lead to a valid inference?
+      </div>
+<div class="choice">○ testing the last 4,000 bulbs in the production line</div>
+<div class="choice">○ testing the first 2,000 light bulbs in the production line</div>
+<div class="choice">○ retesting 100 light bulbs that have already been tested</div>
+<div class="choice">○ testing every fiftieth light bulb in the production line</div>
+</div>
+<div class="side">
+<div class="label">Revised</div><div class="type">Revised: Classification</div>
+<div class="stem">
+        A quality control manager wants to determine the percentage of defective light bulbs in a production line.
+        <br/><br/><strong>Drag each sampling method to the correct category.</strong>
+</div>
+<div class="classification-bank">
+<strong>Possible Responses</strong><br/>
+<span class="chip">testing the last 4,000 bulbs in the production line</span>
+<span class="chip">testing the first 2,000 light bulbs in the production line</span>
+<span class="chip">retesting 100 light bulbs that have already been tested</span>
+<span class="chip">testing every fiftieth light bulb in the production line</span>
+</div>
+<div class="class-grid" style="grid-template-columns:repeat(2,1fr);">
+<div class="class-col">
+<div class="class-head">Likely Valid Inference</div>
+<div class="drop">Drop response here</div>
+</div>
+<div class="class-col">
+<div class="class-head">Not Likely Valid Inference</div>
+<div class="drop">Drop responses here</div>
+</div>
+</div>
+<div class="note"><strong>Intent preserved and extended:</strong> Students still identify the sampling method that would most likely support a valid inference, but now evaluate all four methods rather than selecting one answer.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>Likely Valid Inference: testing every fiftieth light bulb in the production line. Not Likely Valid Inference: testing the last 4,000 bulbs; testing the first 2,000 bulbs; retesting 100 bulbs that have already been tested.</div></section>
+</div></section><section class="lesson-tab" id="tab2"><div class="embedded-lesson">
+<h1>03_Measures of Center</h1><div class="lesson-subtitle">Original vs. Revised Technology-Enhanced Items</div>
+<table class="item-detail">
+<tr><th>Item ID</th><th>Original Type</th><th>Revised Type</th><th class="center">Category</th><th>Intent</th></tr>
+<tr><td>MA.7.0129_Q03</td><td>Multiple Choice</td><td>Choice Matrix</td><td class="center">Single Technology-Enhanced Item</td><td>Compare measures of center (mean, median, mode) between two data sets.</td></tr>
+<tr><td>MA.7.0129_Q04</td><td>Multiple Choice</td><td>Choice Matrix</td><td class="center">Single Technology-Enhanced Item</td><td>Evaluate mean, median, mode, and outlier claims for two data sets.</td></tr>
+</table>
+<section class="item"><div class="title">MA.7.0129_Q03 — Measures of Center Quick Check, Item 4</div><div class="item-intent">Intent: compare measures of center (mean, median, mode) between two data sets.</div><div class="compare">
+<div class="side"><div class="label">Original</div><div class="type">Original: Multiple Choice</div>
+<div class="stem">The following data sets represent the highway fuel efficiency, in miles per gallon (mpg), of randomly selected cars from two car companies.<br/><br/>
+<strong>Car Company A:</strong> 35, 28, 35, 30, 31, 38, 35, 30<br/>
+<strong>Car Company B:</strong> 29, 33, 36, 27, 34, 34, 34, 25<br/><br/>Which of the following statements is true?</div>
+<div class="choice">○ The cars from Company A have a higher mean highway fuel efficiency than the cars from Company B.</div>
+<div class="choice">○ The cars from Company B have a higher mode highway fuel efficiency than the cars from Company A.</div>
+<div class="choice">○ The cars from both companies have the same mean, median, and mode highway fuel efficiency.</div>
+<div class="choice">○ The cars from Company A have a higher median highway fuel efficiency than the cars from Company B.</div></div>
+<div class="side"><div class="label">Revised</div><div class="type">Revised: Choice Matrix</div>
+<div class="stem">The following data sets represent the <strong>highway fuel efficiency, in miles per gallon (mpg), of randomly selected cars</strong> from two car companies.<br/><br/>
+<strong>Car Company A:</strong> 35, 28, 35, 30, 31, 38, 35, 30<br/>
+<strong>Car Company B:</strong> 29, 33, 36, 27, 34, 34, 34, 25<br/><br/><strong>For each statement, select True or False.</strong></div>
+<table class="matrix"><tr><th>Statement</th><th>True</th><th>False</th></tr>
+<tr><td>The cars from Company A have a higher mean highway fuel efficiency than the cars from Company B.</td><td>○</td><td>○</td></tr>
+<tr><td>The cars from Company B have a higher mode highway fuel efficiency than the cars from Company A.</td><td>○</td><td>○</td></tr>
+<tr><td>The cars from both companies have the same mean, median, and mode highway fuel efficiency.</td><td>○</td><td>○</td></tr>
+<tr><td>The cars from Company B have a higher median highway fuel efficiency than the cars from Company A.</td><td>○</td><td>○</td></tr></table>
+<div class="key">Answer pattern: TRUE — FALSE — FALSE — TRUE</div>
+<div class="note"><strong>Same intent:</strong> Students compare measures of center for the same cars and highway fuel-efficiency data.</div></div>
+</div><div class="correct-answer-embedded"><strong>Correct Answer: </strong>TRUE — FALSE — FALSE — TRUE.</div></section>
+<section class="item"><div class="title">MA.7.0129_Q04 — Measures of Center Quick Check, Item 5</div><div class="item-intent">Intent: evaluate mean, median, mode, and outlier claims for two data sets.</div><div class="compare">
+<div class="side"><div class="label">Original</div><div class="type">Original: Multiple Choice</div>
+<div class="stem">The randomly selected delivery times (in minutes) of two fast food restaurants are shown. Which of the following statements is false?</div>
+<table class="data">
+<tr><th>Fast Food 1</th><th>Fast Food 2</th></tr>
+<tr><td>42</td><td>40</td></tr>
+<tr><td>38</td><td>37</td></tr>
+<tr><td>37</td><td>40</td></tr>
+<tr><td>39</td><td>41</td></tr>
+<tr><td>38</td><td>38</td></tr>
+<tr><td>40</td><td>46</td></tr>
+<tr><td>45</td><td>41</td></tr>
+<tr><td>41</td><td>37</td></tr>
+<tr><td>40</td><td>40</td></tr>
+</table>
+<div class="choice">○ Both fast food restaurants have the same mean delivery time of 40 minutes.</div>
+<div class="choice">○ Both fast food restaurants have the same median delivery time of 40 minutes.</div>
+<div class="choice">○ Both fast food restaurants have exactly one modal delivery time of 40 minutes.</div>
+<div class="choice">○ Neither data set contains an outlier.</div></div>
+<div class="side"><div class="label">Revised</div><div class="type">Revised: Choice Matrix</div>
+<div class="stem">The randomly selected delivery times (in minutes) of two fast food restaurants are as follows.</div>
+<table class="data"><tr><th>Fast Food 1</th><th>Fast Food 2</th></tr><tr><td>42</td><td>40</td></tr><tr><td>38</td><td>37</td></tr><tr><td>37</td><td>40</td></tr><tr><td>39</td><td>41</td></tr><tr><td>38</td><td>38</td></tr><tr><td>40</td><td>46</td></tr><tr><td>45</td><td>41</td></tr><tr><td>41</td><td>37</td></tr><tr><td>40</td><td>40</td></tr></table>
+<strong>For each statement, select True or False.</strong>
+<table class="matrix"><tr><th>Statement</th><th>True</th><th>False</th></tr>
+<tr><td>Both fast food restaurants have the same mean delivery time of 40 minutes.</td><td>○</td><td>○</td></tr>
+<tr><td>Both fast food restaurants have exactly one modal delivery time of 40 minutes.</td><td>○</td><td>○</td></tr>
+<tr><td>Fast Food 2 has an outlier of 46 minutes.</td><td>○</td><td>○</td></tr>
+<tr><td>Both fast food restaurants have the same median delivery time of 40 minutes.</td><td>○</td><td>○</td></tr></table>
+<div class="key">Answer pattern: TRUE — FALSE — FALSE — TRUE</div>
+<div class="note"><strong>Same intent:</strong> Students evaluate mean, median, mode, and outlier claims using the same delivery-time data.</div></div>
+</div><div class="correct-answer-embedded"><strong>Correct Answer: </strong>TRUE — FALSE — FALSE — TRUE.</div></section></div></section><section class="lesson-tab" id="tab3"><div class="embedded-lesson">
+<h1>04_Measures of Variation</h1>
+<div class="lesson-subtitle">Original vs. Revised Technology-Enhanced Items</div>
+<table class="item-detail">
+<tr><th>Item ID</th><th>Original Type</th><th>Revised Type</th><th class="center">Category</th><th>Intent</th></tr>
+<tr><td>MA.7.0156_Q04</td><td>Multiple Choice</td><td>Order List</td><td class="center">Single Technology-Enhanced Item</td><td>Calculate and compare the range of multiple data sets.</td></tr>
+<tr><td>MA.7.0130_Q03</td><td>Multiple Choice</td><td>Cloze Association</td><td class="center">Single Technology-Enhanced Item</td><td>Use range to determine which data set is more consistent.</td></tr>
+</table>
+<div class="card">
+<div class="title">MA.7.0156_Q04 — Measures of Variation Quick Check, Item 2</div>
+<div class="item-intent">Intent: calculate and compare the range of multiple data sets.</div>
+<div class="grid">
+<div class="col">
+<span class="badge">Original: Multiple Choice</span>
+<p><strong>Which of the following data sets has the smallest range?</strong></p>
+<div class="choice">○ {50, 30, 10, 0, 80, 100}</div><div class="choice">○ {37, 19, 40, 54, 75, 68}</div><div class="choice">○ {324, 318, 367, 312, 389, 337}</div><div class="choice">○ {148, 145, 117, 148, 199, 172}</div>
+<div class="answer"><strong>Original key:</strong> {37, 19, 40, 54, 75, 68} (range 56)</div>
+</div>
+<div class="col">
+<span class="badge">Revised: Order List</span>
+<p><strong>Arrange the data sets in order from smallest to greatest range.</strong></p>
+<p class="order-direction"><strong>Smallest range</strong> ↓ <strong>Greatest range</strong></p>
+<ul class="order-list" id="rangeOrderList">
+<li data-value="{50, 30, 10, 0, 80, 100}" draggable="true"><span class="handle">☰</span>{50, 30, 10, 0, 80, 100}</li><li data-value="{37, 19, 40, 54, 75, 68}" draggable="true"><span class="handle">☰</span>{37, 19, 40, 54, 75, 68}</li><li data-value="{324, 318, 367, 312, 389, 337}" draggable="true"><span class="handle">☰</span>{324, 318, 367, 312, 389, 337}</li><li data-value="{148, 145, 117, 148, 199, 172}" draggable="true"><span class="handle">☰</span>{148, 145, 117, 148, 199, 172}</li>
+</ul>
+<div class="actions">
+<button onclick="checkRangeOrder()" type="button">Check Order</button>
+<button class="secondary" onclick="resetRangeOrder()" type="button">Reset</button>
+</div>
+<div class="feedback" id="rangeOrderFeedback"></div>
+<div class="note"><strong>Intent preserved:</strong> Students compare the ranges of all four data sets and order them from smallest to greatest.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>Smallest to greatest range: {37, 19, 40, 54, 75, 68} → {324, 318, 367, 312, 389, 337} → {148, 145, 117, 148, 199, 172} → {50, 30, 10, 0, 80, 100}. Ranges: 56, 77, 82, 100.</div></div>
+<div class="card">
+<div class="title">MA.7.0130_Q03 — Measures of Variation Quick Check, Item 5</div>
+<div class="item-intent">Intent: use range to determine which data set is more consistent.</div>
+<div class="grid">
+<div class="col">
+<span class="badge">Original: Multiple Choice</span>
+<p>The randomly selected delivery times, in minutes, of two restaurants are shown.</p>
+<table class="data-table">
+<tr><th>Restaurant 1</th><th>Restaurant 2</th></tr>
+<tr><td>40</td><td>42</td></tr><tr><td>37</td><td>38</td></tr>
+<tr><td>40</td><td>37</td></tr><tr><td>41</td><td>39</td></tr>
+<tr><td>38</td><td>38</td></tr><tr><td>46</td><td>40</td></tr>
+<tr><td>41</td><td>42</td></tr><tr><td>37</td><td>41</td></tr>
+<tr><td>40</td><td>40</td></tr>
+</table>
+<p><strong>Which restaurant has more consistent delivery times?</strong></p>
+<div class="choice">○ The delivery times of both restaurants are equally consistent.</div>
+<div class="choice">○ Restaurant 2 is more consistent, because the range of its delivery times is lower than that of Restaurant 1.</div>
+<div class="choice">○ Restaurant 1 is more consistent, because the range of its delivery times is lower than that of Restaurant 2.</div>
+<div class="choice">○ Restaurant 2 is more consistent, because the range of its delivery times is higher than that of Restaurant 1.</div>
+<div class="answer"><strong>Original key:</strong> Restaurant 2 is more consistent because its range is lower.</div>
+</div>
+<div class="col">
+<span class="badge">Revised: Cloze Association</span>
+<p>The randomly selected delivery times, in minutes, of two restaurants are shown.</p>
+<table class="data-table">
+<tr><th>Restaurant 1</th><th>Restaurant 2</th></tr>
+<tr><td>40</td><td>42</td></tr><tr><td>37</td><td>38</td></tr>
+<tr><td>40</td><td>37</td></tr><tr><td>41</td><td>39</td></tr>
+<tr><td>38</td><td>38</td></tr><tr><td>46</td><td>40</td></tr>
+<tr><td>41</td><td>42</td></tr><tr><td>37</td><td>41</td></tr>
+<tr><td>40</td><td>40</td></tr>
+</table>
+<p><strong>Drag the correct responses into the blanks to complete the comparison.</strong></p>
+<div class="group-label">Options for blank 1</div>
+<div class="drag-bank" id="restaurantBank">
+<div class="drag-chip restaurant-chip" data-value="Restaurant 1" draggable="true">Restaurant 1</div>
+<div class="drag-chip restaurant-chip" data-value="Restaurant 2" draggable="true">Restaurant 2</div>
+</div>
+<div class="group-label">Options for blank 2</div>
+<div class="drag-bank" id="rangeBank">
+<div class="drag-chip range-chip" data-value="higher" draggable="true">higher</div>
+<div class="drag-chip range-chip" data-value="lower" draggable="true">lower</div>
+</div>
+<p class="cloze-sentence">
+<span class="grouped-dropzone restaurant-zone" data-group="restaurant">Drop response here</span>
+        is more consistent because its range of delivery times is
+        <span class="grouped-dropzone range-zone" data-group="range">Drop response here</span>.
+      </p>
+<div class="actions">
+<button onclick="checkGroupedCloze()" type="button">Check Cloze</button>
+<button class="secondary" onclick="resetGroupedCloze()" type="button">Reset</button>
+</div>
+<div class="feedback" id="groupedClozeFeedback"></div>
+<div class="note"><strong>Intent preserved:</strong> Students identify the more consistent restaurant and whether its range of delivery times is higher or lower.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>Restaurant 2; lower.</div></div>
+</div></section><section class="lesson-tab" id="tab4"><div class="embedded-lesson">
+<h1>05_Comparing Data Distributions</h1>
+<div class="lesson-subtitle">Original vs. Revised Technology-Enhanced Items</div>
+<table class="item-detail">
+<tr><th>Item ID</th><th>Original Type</th><th>Revised Type</th><th class="center">Category</th><th>Intent</th></tr>
+<tr><td>MA.7.0128_Q03</td><td>Multiple Choice</td><td>Cloze Drop Down</td><td class="center">Single Technology-Enhanced Item</td><td>Calculate and compare the medians of two data sets.</td></tr>
+<tr><td>MA.7.0128_Q04</td><td>Multiple Choice</td><td>Multiple Part Selected Response — Classification</td><td class="center">Multipart</td><td>Compare measures of center and variability between two data sets.</td></tr>
+</table>
+<div class="card"><div class="head"><h2>MA.7.0128_Q03 — Comparing Data Distributions Quick Check, Item 3</h2></div><div class="item-intent">Intent: calculate and compare the medians of two data sets.</div><div class="grid"><div class="side"><div class="label">Original</div><span class="tag">Original: Multiple Choice</span>
+<p>The data shows the number of miles run per week by randomly selected students from two different classes. Find the difference between the medians. Which class has a higher median? By how much?</p>
+<p><b>Class 1:</b> 6, 8, 10, 11, 14, 4, 5, 8, 2, 7, 7, 5, 10, 12, 11<br/><b>Class 2:</b> 6, 4, 5, 6, 7, 8, 12, 9, 10, 11, 5, 8, 7, 4, 10</p>
+<label class="choice">○ Class 1 has a higher median than Class 2 by 0.5 mile.</label><label class="choice">○ Class 2 has a higher median than Class 1 by 1 mile.</label><label class="choice">○ Class 2 has a higher median than Class 1 by 0.5 mile.</label><label class="choice">○ Class 1 has a higher median than Class 2 by 1 mile.</label></div>
+<div class="side"><div class="label">Revised</div><span class="tag">Revised: Cloze Drop Down</span><p>The data shows the number of miles run per week by randomly selected students from two different classes.</p>
+<p><b>Class 1:</b> 6, 8, 10, 11, 14, 4, 5, 8, 2, 7, 7, 5, 10, 12, 11<br/><b>Class 2:</b> 6, 4, 5, 6, 7, 8, 12, 9, 10, 11, 5, 8, 7, 4, 10</p><p><b>Complete the comparison of the medians.</b></p>
+<p>The median for Class 1 is <select><option>Choose...</option><option>7</option><option>8</option><option>8.5</option><option>9</option></select> miles, and the median for Class 2 is <select><option>Choose...</option><option>6.5</option><option>7</option><option>7.5</option><option>8</option></select> miles. Therefore, <select><option>Choose...</option><option>Class 1</option><option>Class 2</option></select> has the higher median by <select><option>Choose...</option><option>0.5</option><option>1</option><option>1.5</option><option>2</option></select> mile.</p>
+<div class="note"><b>Not a shortcut:</b> the student independently determines both medians, the higher class, and the difference.</div></div></div><div class="correct-answer-embedded"><strong>Correct Answer: </strong>Class 1 median = 8 miles; Class 2 median = 7 miles; Class 1 has the higher median by 1 mile.</div></div>
+<div class="card"><div class="head"><h2>MA.7.0128_Q04 — Comparing Data Distributions Quick Check, Item 4</h2></div><div class="item-intent">Intent: compare measures of center and variability between two data sets.</div><div class="grid"><div class="side"><div class="label">Original</div><span class="tag">Original: Multiple Choice</span>
+<p>The data shows the number of seconds it took two randomly selected groups to thread a needle. Compare the measures of center and variability of these data sets.</p><p><b>Student Group A:</b> 56, 14, 26, 28, 29, 45, 32, 80, 3, 10<br/><b>Student Group B:</b> 27, 24, 18, 19, 5, 16, 22, 10, 6, 20</p><p>Which of the following statements about these data sets is false?</p>
+<label class="choice">○ The ranges of the time taken by Group A and Group B are the same.</label><label class="choice">○ The mean time taken by Group A is higher than that of Group B.</label><label class="choice">○ The median time taken by members of Group A to thread a needle is higher than that of members of Group B.</label><label class="choice">○ The amount of variability of the time taken by Group A to thread a needle is higher than the amount of variability of the time taken by Group B.</label></div>
+<div class="side"><div class="label">Revised</div><span class="tag">Revised: Multiple Part Selected Response — Classification</span><p>The data shows the number of seconds it took two randomly selected groups to thread a needle. Compare the measures of center and variability of these data sets.</p><p><b>Student Group A:</b> 56, 14, 26, 28, 29, 45, 32, 80, 3, 10<br/><b>Student Group B:</b> 27, 24, 18, 19, 5, 16, 22, 10, 6, 20</p>
+<div class="part"><b>Part A — Selected Response</b><p>Which statement correctly compares the measures of center for the times to thread a needle?</p><label class="choice">○ Group A has both a higher mean and a higher median than Group B.</label><label class="choice">○ Group A has a higher mean, but Group B has a higher median.</label><label class="choice">○ Group B has both a higher mean and a higher median than Group A.</label><label class="choice">○ The two groups have the same mean and the same median.</label></div>
+<div class="part"><b>Part B — Classification TEI</b><p>Classify each statement according to the group it describes. Place every statement in one column.</p><div class="bank"><span class="chip">The range of times to thread a needle is 77 seconds.</span><span class="chip">The range of times to thread a needle is 22 seconds.</span><span class="chip">The times to thread a needle have greater variability.</span><span class="chip">The times to thread a needle have less variability.</span></div><div class="cols"><div class="col"><b>Student Group A</b></div><div class="col"><b>Student Group B</b></div></div></div>
+<div class="note"><b>Not a shortcut:</b> Part A assesses center; Part B separately requires range/variability classification. Together they preserve the full original intent.</div></div></div><div class="correct-answer-embedded"><strong>Correct Answer: </strong>Part A: Group A has both a higher mean and a higher median than Group B. Part B — Group A: range 77 seconds; greater variability. Group B: range 22 seconds; less variability.</div></div></div></section><section class="lesson-tab" id="tab5"><div class="embedded-lesson"><div class="unit-test-tab"><h1>06_Statistics Unit Test</h1><div class="lesson-subtitle">Original vs. Revised Technology-Enhanced Items — 9 of 15 Items Revised</div>
+<table class="summary">
+<tr><th>Item</th><th>Item ID</th><th>Original Type</th><th>Revised Type</th><th>Category</th></tr>
+<tr><td>1</td><td>MA.7.0123_Q07</td><td>Multiple Choice</td><td>Classification</td><td>Single Technology-Enhanced Item</td></tr>
+<tr><td>4</td><td>MA.7.0154_Q06</td><td>Numeric Entry</td><td>Match List + Cloze Drop Down</td><td>Multiple Part</td></tr>
+<tr><td>5</td><td>MA.7.0155_Q05</td><td>Multiple Choice</td><td>Order List</td><td>Single Technology-Enhanced Item</td></tr>
+<tr><td>6</td><td>MA.7.0155_Q06</td><td>Numeric Entry</td><td>Cloze Drop Down</td><td>Single Technology-Enhanced Item</td></tr>
+<tr><td>7</td><td>MA.7.0129_Q06</td><td>Multiple Choice</td><td>Choice Matrix</td><td>Single Technology-Enhanced Item</td></tr>
+<tr><td>11</td><td>MA.7.0130_Q06</td><td>Numeric Entry</td><td>Cloze Association + Classification</td><td>Multiple Part</td></tr>
+<tr><td>12</td><td>MA.7.0127_Q08</td><td>Numeric Entry</td><td>Graphing</td><td>Single Technology-Enhanced Item</td></tr>
+<tr><td>13</td><td>MA.7.0128_Q07</td><td>Numeric Entry</td><td>Cloze Drop Down + Choice Matrix</td><td>Multiple Part</td></tr>
+<tr><td>14</td><td>MA.7.0128_Q08</td><td>Multiple Choice</td><td>Cloze Drop Down + Choice Matrix</td><td>Multiple Part</td></tr>
+</table>
+<!-- ================= ITEM 1 ================= -->
+<div class="card">
+<div class="title">MA.7.0123_Q07 — Item 1</div><div class="item-intent">Intent: identify a sample that gives a valid generalization.</div>
+<div class="grid">
+<div class="col">
+<span class="badge">Original: Multiple Choice</span>
+<div class="stem">A large company wants to find out what team-building activity its employees prefer. Which of the following samples can give the most valid generalization?</div>
+<div class="choice">○ 400 randomly chosen employees from the list of all employees</div>
+<div class="choice">○ all 624 female employees in the company</div>
+<div class="choice">○ all employees who have worked in the company for 5 years or more</div>
+<div class="choice">○ a group with one member from each department</div>
+<div class="answer"><strong>Original key:</strong> 400 randomly chosen employees from the list of all employees</div>
+</div>
+<div class="col">
+<span class="badge">Revised: Classification</span>
+<div class="stem">A large company wants to find out what team-building activity its employees prefer.<br/><br/><strong>Drag each sampling method into the correct category.</strong></div>
+<div class="bank">
+<span class="chip">400 randomly chosen employees from the list of all employees</span>
+<span class="chip">all 624 female employees in the company</span>
+<span class="chip">all employees who have worked in the company for 5 years or more</span>
+<span class="chip">a group with one member from each department</span>
+</div>
+<div class="class-grid">
+<div class="class-col"><div class="class-head">Valid Sample</div><div class="class-drop">Drop response here</div></div>
+<div class="class-col"><div class="class-head">Biased Sample</div><div class="class-drop">Drop responses here</div></div>
+</div>
+<div class="note"><strong>Intent preserved and extended:</strong> Students still identify the valid sample, but must now also explain why the other three fail by sorting them as biased.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>Valid Sample: 400 randomly chosen employees from the list of all employees. Biased Sample: all 624 female employees; all employees who have worked for 5 years or more; a group with one member from each department.</div></div>
+<!-- ================= ITEM 4 ================= -->
+<div class="card">
+<div class="title">MA.7.0154_Q06 — Item 4</div><div class="item-intent">Intent: calculate and compare the mean shopping times of two groups.</div>
+<div class="grid">
+<div class="col">
+<span class="badge">Original: Numeric Entry</span>
+<div class="stem">Use the table to answer the question.</div>
+<table class="data-table">
+<tr><th>Group A</th><th>Group B</th></tr>
+<tr><td>18, 20, 46, 34, 58, 31, 41</td><td>15, 21, 32, 42, 29, 57, 39</td></tr>
+</table>
+<div class="stem">The table shows the times, in minutes, spent shopping by two different groups. First find the mean times each group spent shopping. Then determine the difference in the mean times. Round your answers to one decimal place.</div>
+<div class="answer">The mean time Group A spent shopping is ___ minutes.<br/>The mean time Group B spent shopping is ___ minutes.<br/>The mean times Group A and Group B spent shopping differ by ___ minutes.</div>
+</div>
+<div class="col">
+<span class="badge">Revised: Multiple Part Selected Response — Match List + Cloze Drop Down</span>
+<div class="stem">Use the table to answer the question.</div>
+<table class="data-table">
+<tr><th>Group A</th><th>Group B</th></tr>
+<tr><td>18, 20, 46, 34, 58, 31, 41</td><td>15, 21, 32, 42, 29, 57, 39</td></tr>
+</table>
+<div class="part">
+<div class="part-label">Part A — Match List</div>
+<p>Drag the correct mean shopping time to each group.</p>
+<div class="bank" id="item4Bank">
+<span class="chip" data-value="35.4" draggable="true">35.4 minutes</span>
+<span class="chip" data-value="33.6" draggable="true">33.6 minutes</span>
+<span class="chip" data-value="34.5" draggable="true">34.5 minutes</span>
+<span class="chip" data-value="32.6" draggable="true">32.6 minutes</span>
+</div>
+<div class="match-row"><div>Group A</div><div class="dropzone item4-zone" data-key="35.4">Drop here</div></div>
+<div class="match-row"><div>Group B</div><div class="dropzone item4-zone" data-key="33.6">Drop here</div></div>
+</div>
+<div class="part">
+<div class="part-label">Part B — Cloze Drop Down</div>
+<p class="cloze-sentence">The mean times Group A and Group B spent shopping differ by
+          <select><option>Select...</option><option>1.8</option><option>1.9</option><option>2.0</option><option>2.1</option></select> minutes.</p>
+</div>
+<div class="actions">
+<button onclick="checkItem4()" type="button">Check Part A</button>
+<button class="secondary" onclick="resetItem4()" type="button">Reset</button>
+</div>
+<div class="feedback" id="item4Feedback"></div>
+<div class="note"><strong>Not a shortcut:</strong> students still compute both means independently before matching them; Part B requires the subtraction step separately.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>Part A: Group A = 35.4 minutes; Group B = 33.6 minutes. Part B: 1.8 minutes.</div></div>
+<!-- ================= ITEM 5 ================= -->
+<div class="card">
+<div class="title">MA.7.0155_Q05 — Item 5</div><div class="item-intent">Intent: identify and rank data sets by their median.</div>
+<div class="grid">
+<div class="col">
+<span class="badge">Original: Multiple Choice</span>
+<div class="stem">Which data set has the highest median?</div>
+<div class="choice">○ {1, 6, 15, 7, 15, 18, 14}</div>
+<div class="choice">○ {8, 20, 13, 14, 12, 9}</div>
+<div class="choice">○ {11, 15, 16, 8, 12, 14}</div>
+<div class="choice">○ {1, 10, 8, 29, 14, 17, 3}</div>
+<div class="answer"><strong>Original key:</strong> {1, 6, 15, 7, 15, 18, 14} (median 14)</div>
+</div>
+<div class="col">
+<span class="badge">Revised: Order List</span>
+<div class="stem">Arrange the data sets in order from <strong>lowest</strong> to <strong>highest</strong> median.</div>
+<ul class="order-list" id="medianOrderList">
+<li data-value="A" draggable="true"><span class="handle">☰</span>Set A: {1, 6, 15, 7, 15, 18, 14}</li>
+<li data-value="B" draggable="true"><span class="handle">☰</span>Set B: {8, 20, 13, 14, 12, 9}</li>
+<li data-value="C" draggable="true"><span class="handle">☰</span>Set C: {11, 15, 16, 8, 12, 14}</li>
+<li data-value="D" draggable="true"><span class="handle">☰</span>Set D: {1, 10, 8, 29, 14, 17, 3}</li>
+</ul>
+<div class="actions">
+<button onclick="checkMedianOrder()" type="button">Check Order</button>
+<button class="secondary" onclick="resetMedianOrder()" type="button">Reset</button>
+</div>
+<div class="feedback" id="medianOrderFeedback"></div>
+<div class="note"><strong>Intent preserved and extended:</strong> students still identify the highest-median set, but must now compute and order the median of all four.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>Lowest to highest median: Set D → Set B → Set C → Set A. Medians: 8, 12.5, 13, 14.</div></div>
+<!-- ================= ITEM 6 ================= -->
+<div class="card">
+<div class="title">MA.7.0155_Q06 — Item 6</div><div class="item-intent">Intent: find the median value from a grouped frequency table.</div>
+<div class="grid">
+<div class="col">
+<span class="badge">Original: Numeric Entry</span>
+<div class="stem">Use the table to answer the question.</div>
+<table class="data-table">
+<tr><th>Value per House</th><th>Number of Houses</th></tr>
+<tr><td>$150,000</td><td>2</td></tr>
+<tr><td>$220,000</td><td>4</td></tr>
+<tr><td>$490,000</td><td>3</td></tr>
+<tr><td>$540,000</td><td>2</td></tr>
+<tr><td>$800,000</td><td>5</td></tr>
+<tr><td>$975,000</td><td>2</td></tr>
+</table>
+<div class="stem">The values of several houses on Mango Street are displayed on the table. What is the median value of these houses?</div>
+<div class="answer">$ ___</div>
+</div>
+<div class="col">
+<span class="badge">Revised: Cloze Drop Down</span>
+<div class="stem">Use the table to answer the question.</div>
+<table class="data-table">
+<tr><th>Value per House</th><th>Number of Houses</th></tr>
+<tr><td>$150,000</td><td>2</td></tr>
+<tr><td>$220,000</td><td>4</td></tr>
+<tr><td>$490,000</td><td>3</td></tr>
+<tr><td>$540,000</td><td>2</td></tr>
+<tr><td>$800,000</td><td>5</td></tr>
+<tr><td>$975,000</td><td>2</td></tr>
+</table>
+<p class="cloze-sentence">The values of several houses on Mango Street are displayed on the table. The median value of these houses is
+        <select><option>Select...</option><option>$490,000</option><option>$515,000</option><option>$525,000</option><option>$540,000</option></select>.</p>
+<div class="note"><strong>Intent preserved:</strong> same computation, distractors target the common error of picking a listed value instead of averaging the two middle values.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>$515,000.</div></div>
+<!-- ================= ITEM 7 ================= -->
+<div class="card">
+<div class="title">MA.7.0129_Q06 — Item 7</div><div class="item-intent">Intent: determine how an added data point affects the mean for several data sets.</div>
+<div class="grid">
+<div class="col">
+<span class="badge">Original: Multiple Choice</span>
+<div class="stem">Theo, Ara, Jose, and Dana all got 100 percent on their latest math test. Their scores on the previous six tests are listed. Whose mean test score will increase the most?</div>
+<div class="choice">○ Dana: 68, 74, 83, 80, 81, 82</div>
+<div class="choice">○ Ara: 100, 98, 99, 97, 100, 100</div>
+<div class="choice">○ Jose: 91, 93, 97, 96, 96, 96</div>
+<div class="choice">○ Theo: 84, 88, 81, 85, 77, 76</div>
+<div class="answer"><strong>Original key:</strong> Dana (mean increases by 3.14 points)</div>
+</div>
+<div class="col">
+<span class="badge">Revised: Choice Matrix</span>
+<div class="stem">Theo, Ara, Jose, and Dana all got 100 percent on their latest math test. Their scores on the previous six tests are listed below.<br/><br/><strong>For each student, select whether their mean test score will increase by more than 2 points.</strong></div>
+<table class="matrix">
+<tr><th>Student</th><th>More than 2 points</th><th>2 points or less</th></tr>
+<tr><td>Dana: 68, 74, 83, 80, 81, 82</td><td>○</td><td>○</td></tr>
+<tr><td>Theo: 84, 88, 81, 85, 77, 76</td><td>○</td><td>○</td></tr>
+<tr><td>Jose: 91, 93, 97, 96, 96, 96</td><td>○</td><td>○</td></tr>
+<tr><td>Ara: 100, 98, 99, 97, 100, 100</td><td>○</td><td>○</td></tr>
+</table>
+<div class="key">Answer pattern: Dana &amp; Theo = More than 2 points (+3.14, +2.6) — Jose &amp; Ara = 2 points or less (+0.74, +0.14)</div>
+<div class="note"><strong>Intent preserved and extended:</strong> students still identify the largest increase, but now must compute and reason about all four instead of picking one.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>Dana and Theo = More than 2 points; Jose and Ara = 2 points or less.</div></div>
+<!-- ================= ITEM 11 ================= -->
+<div class="card">
+<div class="title">MA.7.0130_Q06 — Item 11</div><div class="item-intent">Intent: find each team's range and use range to compare consistency.</div>
+<div class="grid">
+<div class="col">
+<span class="badge">Original: Numeric Entry</span>
+<div class="stem">These are the scores for two randomly selected lacrosse teams. Find the range of the number of goals scored by each team. Based on the range, which team has a more consistent number of goals scored?</div>
+<table class="data-table">
+<tr><th>Lacrosse Team 1</th><th>Lacrosse Team 2</th></tr>
+<tr><td>6, 0, 4, 17, 3, 12</td><td>23, 14, 22, 14, 17, 22</td></tr>
+</table>
+<div class="answer">The range of Team 1 is ___. The range of Team 2 is ___. Team ___ has a more consistent number of goals scored.</div>
+</div>
+<div class="col">
+<span class="badge">Revised: Multiple Part Selected Response — Cloze Association + Classification</span>
+<table class="data-table">
+<tr><th>Lacrosse Team 1</th><th>Lacrosse Team 2</th></tr>
+<tr><td>6, 0, 4, 17, 3, 12</td><td>23, 14, 22, 14, 17, 22</td></tr>
+</table>
+<div class="part">
+<div class="part-label">Part A — Cloze Association</div>
+<p>Drag the correct range into each blank.</p>
+<div class="bank" id="item11Bank">
+<span class="chip" data-value="9" draggable="true">9</span>
+<span class="chip" data-value="17" draggable="true">17</span>
+<span class="chip" data-value="14" draggable="true">14</span>
+<span class="chip" data-value="23" draggable="true">23</span>
+</div>
+<p class="cloze-sentence">The range of the number of goals scored by Lacrosse Team 1 is
+          <span class="dropzone cloze-dropzone item11-zone" data-key="17">Drop here</span>.
+          The range of the number of goals scored by Lacrosse Team 2 is
+          <span class="dropzone cloze-dropzone item11-zone" data-key="9">Drop here</span>.</p>
+<div class="actions">
+<button onclick="checkItem11()" type="button">Check Part A</button>
+<button class="secondary" onclick="resetItem11()" type="button">Reset</button>
+</div>
+<div class="feedback" id="item11Feedback"></div>
+</div>
+<div class="part">
+<div class="part-label">Part B — Classification</div>
+<p>Classify each statement according to the team it describes. Place every statement in one column.</p>
+<div class="bank">
+<span class="chip">The range of goals scored is 17.</span>
+<span class="chip">The range of goals scored is 9.</span>
+<span class="chip">This team's goals scored are more consistent.</span>
+<span class="chip">This team's goals scored are less consistent.</span>
+</div>
+<div class="class-grid">
+<div class="class-col"><div class="class-head">Lacrosse Team 1</div><div class="class-drop">Drop responses here</div></div>
+<div class="class-col"><div class="class-head">Lacrosse Team 2</div><div class="class-drop">Drop responses here</div></div>
+</div>
+</div>
+<div class="note"><strong>Intent preserved:</strong> Part A requires computing both ranges; Part B requires applying those ranges to reason about consistency for both teams, not just pick a winner. Neither part is a plain multiple-choice guess.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>Part A: Team 1 range = 17; Team 2 range = 9. Part B — Team 1: range 17, less consistent. Team 2: range 9, more consistent.</div></div>
+<!-- ================= ITEM 12 ================= -->
+<div class="card">
+<div class="title">MA.7.0127_Q08 — Item 12</div><div class="item-intent">Intent: compare two dot-plot distributions to find common data values.</div>
+<div class="grid">
+<div class="col">
+<span class="badge">Original: Numeric Entry</span>
+<div class="stem">Use the image to answer the question.</div>
+<div class="dotplot-label">Gas Mileage (mpg) — Cars</div>
+<svg viewbox="0 0 300 70">
+<line stroke="#333" stroke-width="1.5" x1="20" x2="280" y1="55" y2="55"></line>
+<g fill="#e07b1f">
+<circle cx="40" cy="45" r="5"></circle>
+<circle cx="90" cy="45" r="5"></circle><circle cx="90" cy="33" r="5"></circle>
+<circle cx="140" cy="45" r="5"></circle><circle cx="140" cy="33" r="5"></circle><circle cx="140" cy="21" r="5"></circle>
+<circle cx="190" cy="45" r="5"></circle><circle cx="190" cy="33" r="5"></circle>
+<circle cx="240" cy="45" r="5"></circle>
+</g>
+<text font-size="10" text-anchor="middle" x="40" y="68">18</text>
+<text font-size="10" text-anchor="middle" x="90" y="68">19</text>
+<text font-size="10" text-anchor="middle" x="140" y="68">20</text>
+<text font-size="10" text-anchor="middle" x="190" y="68">21</text>
+<text font-size="10" text-anchor="middle" x="240" y="68">22</text>
+</svg>
+<div class="dotplot-label">Gas Mileage (mpg) — SUVs</div>
+<svg viewbox="0 0 300 70">
+<line stroke="#333" stroke-width="1.5" x1="20" x2="280" y1="55" y2="55"></line>
+<g fill="#e07b1f">
+<circle cx="40" cy="45" r="5"></circle>
+<circle cx="90" cy="45" r="5"></circle>
+<circle cx="140" cy="45" r="5"></circle><circle cx="140" cy="33" r="5"></circle>
+<circle cx="190" cy="45" r="5"></circle><circle cx="190" cy="33" r="5"></circle>
+<circle cx="240" cy="45" r="5"></circle><circle cx="240" cy="33" r="5"></circle><circle cx="240" cy="21" r="5"></circle>
+</g>
+<text font-size="10" text-anchor="middle" x="40" y="68">21</text>
+<text font-size="10" text-anchor="middle" x="90" y="68">22</text>
+<text font-size="10" text-anchor="middle" x="140" y="68">23</text>
+<text font-size="10" text-anchor="middle" x="190" y="68">24</text>
+<text font-size="10" text-anchor="middle" x="240" y="68">25</text>
+</svg>
+<div class="stem">The dot plots show the gas mileage for randomly selected cars and SUVs. Which data values do both distributions have in common?</div>
+<div class="answer">Lowest value in common: ___    Highest value in common: ___</div>
+</div>
+<div class="col">
+<span class="badge">Revised: Graphing</span>
+<div class="stem">Use the image to answer the question.</div>
+<div class="dotplot-label">Gas Mileage (mpg) — Cars</div>
+<svg viewbox="0 0 300 70">
+<line stroke="#333" stroke-width="1.5" x1="20" x2="280" y1="55" y2="55"></line>
+<g fill="#e07b1f">
+<circle cx="40" cy="45" r="5"></circle>
+<circle cx="90" cy="45" r="5"></circle><circle cx="90" cy="33" r="5"></circle>
+<circle cx="140" cy="45" r="5"></circle><circle cx="140" cy="33" r="5"></circle><circle cx="140" cy="21" r="5"></circle>
+<circle cx="190" cy="45" r="5"></circle><circle cx="190" cy="33" r="5"></circle>
+<circle cx="240" cy="45" r="5"></circle>
+</g>
+<text font-size="10" text-anchor="middle" x="40" y="68">18</text>
+<text font-size="10" text-anchor="middle" x="90" y="68">19</text>
+<text font-size="10" text-anchor="middle" x="140" y="68">20</text>
+<text font-size="10" text-anchor="middle" x="190" y="68">21</text>
+<text font-size="10" text-anchor="middle" x="240" y="68">22</text>
+</svg>
+<div class="dotplot-label">Gas Mileage (mpg) — SUVs</div>
+<svg viewbox="0 0 300 70">
+<line stroke="#333" stroke-width="1.5" x1="20" x2="280" y1="55" y2="55"></line>
+<g fill="#e07b1f">
+<circle cx="40" cy="45" r="5"></circle>
+<circle cx="90" cy="45" r="5"></circle>
+<circle cx="140" cy="45" r="5"></circle><circle cx="140" cy="33" r="5"></circle>
+<circle cx="190" cy="45" r="5"></circle><circle cx="190" cy="33" r="5"></circle>
+<circle cx="240" cy="45" r="5"></circle><circle cx="240" cy="33" r="5"></circle><circle cx="240" cy="21" r="5"></circle>
+</g>
+<text font-size="10" text-anchor="middle" x="40" y="68">21</text>
+<text font-size="10" text-anchor="middle" x="90" y="68">22</text>
+<text font-size="10" text-anchor="middle" x="140" y="68">23</text>
+<text font-size="10" text-anchor="middle" x="190" y="68">24</text>
+<text font-size="10" text-anchor="middle" x="240" y="68">25</text>
+</svg>
+<div class="stem">The dot plots show the gas mileage for randomly selected cars and SUVs.<br/><br/><strong>On the number line below, select the lowest value in common and the highest value in common between the two distributions.</strong></div>
+<svg class="numline" id="item12svg" viewbox="0 0 300 70">
+<line stroke="#333" stroke-width="1.5" x1="20" x2="280" y1="35" y2="35"></line>
+<g id="item12points">
+<circle cx="20" cy="35" data-val="18" fill="#cbd5df" r="8"></circle>
+<circle cx="57" cy="35" data-val="19" fill="#cbd5df" r="8"></circle>
+<circle cx="94" cy="35" data-val="20" fill="#cbd5df" r="8"></circle>
+<circle cx="131" cy="35" data-val="21" fill="#cbd5df" r="8"></circle>
+<circle cx="169" cy="35" data-val="22" fill="#cbd5df" r="8"></circle>
+<circle cx="206" cy="35" data-val="23" fill="#cbd5df" r="8"></circle>
+<circle cx="243" cy="35" data-val="24" fill="#cbd5df" r="8"></circle>
+<circle cx="280" cy="35" data-val="25" fill="#cbd5df" r="8"></circle>
+</g>
+<text font-size="10" text-anchor="middle" x="20" y="55">18</text>
+<text font-size="10" text-anchor="middle" x="57" y="55">19</text>
+<text font-size="10" text-anchor="middle" x="94" y="55">20</text>
+<text font-size="10" text-anchor="middle" x="131" y="55">21</text>
+<text font-size="10" text-anchor="middle" x="169" y="55">22</text>
+<text font-size="10" text-anchor="middle" x="206" y="55">23</text>
+<text font-size="10" text-anchor="middle" x="243" y="55">24</text>
+<text font-size="10" text-anchor="middle" x="280" y="55">25</text>
+</svg>
+<p style="font-size:14px;margin-top:6px">Lowest value in common: <strong id="item12Lowest">—</strong>    Highest value in common: <strong id="item12Highest">—</strong></p>
+<div class="actions">
+<button onclick="checkItem12()" type="button">Check</button>
+<button class="secondary" onclick="resetItem12()" type="button">Reset</button>
+</div>
+<div class="feedback" id="item12Feedback"></div>
+<div class="note"><strong>Prioritized as Graphing per scope guidance:</strong> this is the strongest graphing candidate in the unit test — the student interacts directly with the plotted data instead of typing values into blanks. The number line spans the full combined range (18–25) of both plots so "lowest/highest in common" isn't shortcut-able by only two visible options.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>Lowest value in common = 21 mpg; highest value in common = 22 mpg.</div></div>
+<!-- ================= ITEM 13 ================= -->
+<div class="card">
+<div class="title">MA.7.0128_Q07 — Item 13</div><div class="item-intent">Intent: find the median for each class and compare the medians.</div>
+<div class="grid">
+<div class="col">
+<span class="badge">Original: Numeric Entry</span>
+<div class="stem">Fifteen students are randomly selected from two different classes. They were asked how many books they read during the summer. Their responses are as follows. Find the median number of books read by each class. Which class has a higher median number of books read?</div>
+<p><strong>Class 1:</strong> 0, 5, 3, 6, 7, 8, 10, 1, 1, 4, 5, 6, 4, 5, 6<br/><strong>Class 2:</strong> 2, 2, 4, 3, 0, 0, 6, 7, 10, 9, 6, 5, 3, 1, 2</p>
+<div class="answer">Median Class 1: ___   Median Class 2: ___   Class ___ has the higher median.</div>
+</div>
+<div class="col">
+<span class="badge">Revised: Multiple Part Selected Response — Cloze Drop Down + Choice Matrix</span>
+<p><strong>Class 1:</strong> 0, 5, 3, 6, 7, 8, 10, 1, 1, 4, 5, 6, 4, 5, 6<br/><strong>Class 2:</strong> 2, 2, 4, 3, 0, 0, 6, 7, 10, 9, 6, 5, 3, 1, 2</p>
+<div class="part">
+<div class="part-label">Part A — Cloze Drop Down</div>
+<p class="cloze-sentence">The median number of books read during the summer by Class 1 is
+          <select><option>Select...</option><option>3</option><option>4</option><option>5</option><option>6</option></select>.</p>
+<p class="cloze-sentence">The median number of books read during the summer by Class 2 is
+          <select><option>Select...</option><option>2</option><option>3</option><option>4</option><option>5</option></select>.</p>
+</div>
+<div class="part">
+<div class="part-label">Part B — Choice Matrix</div>
+<p>For each statement, select True or False.</p>
+<table class="matrix">
+<tr><th>Statement</th><th>True</th><th>False</th></tr>
+<tr><td>Class 1 has a higher median number of books read than Class 2.</td><td>○</td><td>○</td></tr>
+<tr><td>Class 2 has a higher median number of books read than Class 1.</td><td>○</td><td>○</td></tr>
+<tr><td>Both classes have the same median number of books read.</td><td>○</td><td>○</td></tr>
+</table>
+<div class="key">Answer pattern: True — False — False</div>
+</div>
+<div class="note"><strong>Intent preserved:</strong> students still compute both medians independently in Part A. Part B then requires evaluating three separate comparison claims rather than picking one of two answers.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>Part A: Class 1 median = 5; Class 2 median = 3. Part B: True — False — False.</div></div>
+<!-- ================= ITEM 14 ================= -->
+<div class="card">
+<div class="title">MA.7.0128_Q08 — Item 14</div><div class="item-intent">Intent: compare two companies using mean, median, and range.</div>
+<div class="grid">
+<div class="col">
+<span class="badge">Original: Multiple Choice</span>
+<div class="stem">The ages of randomly selected employees at two companies are recorded. Their ages are as follows.</div>
+<p><strong>Company A:</strong> 34, 28, 36, 27, 45, 44, 30, 42, 41, 40, 50, 48, 52, 45, 39, 38<br/><strong>Company B:</strong> 29, 32, 48, 51, 49, 37, 33, 35, 36, 40, 45, 48, 43, 43, 44, 48</p>
+<div class="stem">Which of the following statements is true?</div>
+<ol style="margin:0 0 12px 20px;padding:0">
+<li>The mean age of employees from Company A is higher than the mean age of employees from Company B.</li>
+<li>The median age of employees from Company A is lower than the median age of employees from Company B.</li>
+<li>The range of ages of employees from Company A is higher than the range of ages of employees from Company B.</li>
+</ol>
+<div class="choice">○ statements 1, 2, and 3</div>
+<div class="choice">○ statements 1 and 3</div>
+<div class="choice">○ statements 2 and 3</div>
+<div class="choice">○ statements 1 and 2</div>
+<div class="answer"><strong>Original key:</strong> statements 2 and 3 (mean A is actually lower, not higher, than B)</div>
+</div>
+<div class="col">
+<span class="badge">Revised: Multiple Part Selected Response — Cloze Drop Down + Choice Matrix</span>
+<p><strong>Company A:</strong> 34, 28, 36, 27, 45, 44, 30, 42, 41, 40, 50, 48, 52, 45, 39, 38<br/><strong>Company B:</strong> 29, 32, 48, 51, 49, 37, 33, 35, 36, 40, 45, 48, 43, 43, 44, 48</p>
+<div class="part">
+<div class="part-label">Part A — Cloze Drop Down</div>
+<p class="cloze-sentence">Company
+          <select><option>Select...</option><option>A</option><option>B</option></select>
+          has the higher mean age of employees.</p>
+</div>
+<div class="part">
+<div class="part-label">Part B — Choice Matrix</div>
+<p>For each measure, select the company with the greater value.</p>
+<table class="matrix">
+<tr><th>Measure</th><th>Company A</th><th>Company B</th></tr>
+<tr><td>Median age</td><td>○</td><td>○</td></tr>
+<tr><td>Range of ages</td><td>○</td><td>○</td></tr>
+</table>
+<div class="key">Answer key: Part A = Company B · Median = Company B · Range = Company A</div>
+</div>
+<div class="note"><strong>Not a shortcut:</strong> the original bundled three claims into one compound multiple-choice answer, which let students eliminate options without computing every statistic. The revised version forces mean, median, and range to each be verified separately.</div>
+</div>
+</div>
+<div class="correct-answer-embedded"><strong>Correct Answer: </strong>Part A: Company B. Part B: Median age = Company B; Range of ages = Company A.</div></div>
+</div></div></section>
+
+
+
+
+
+<script id="assessment-review-functionality">/* ===== functionality-section-1 ===== */
+let groupedDragged = null;
+let groupedDraggedGroup = null;
+
+function setupGroupedCloze() {
+  document.querySelectorAll('.restaurant-chip,.range-chip').forEach(chip => {
+    chip.addEventListener('dragstart', e => {
+      groupedDragged = chip;
+      groupedDraggedGroup = chip.classList.contains('restaurant-chip') ? 'restaurant' : 'range';
+      e.dataTransfer.setData('text/plain', chip.dataset.value);
+    });
+  });
+
+  document.querySelectorAll('.grouped-dropzone').forEach(zone => {
+    zone.addEventListener('dragover', e => e.preventDefault());
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!groupedDragged) return;
+      if (zone.dataset.group !== groupedDraggedGroup) {
+        zone.textContent = 'Use an option from this group';
+        zone.classList.add('incorrect');
+        setTimeout(() => {
+          if (!zone.dataset.value) {
+            zone.textContent = 'Drop response here';
+            zone.classList.remove('incorrect');
+          }
+        }, 900);
+        return;
+      }
+      if (zone.dataset.value) {
+        const bankId = zone.dataset.group === 'restaurant' ? '#restaurantBank' : '#rangeBank';
+        const old = document.querySelector(`${bankId} .drag-chip[data-value="${CSS.escape(zone.dataset.value)}"]`);
+        if (old) old.classList.remove('used');
+      }
+      zone.dataset.value = groupedDragged.dataset.value;
+      zone.textContent = groupedDragged.dataset.value;
+      zone.classList.add('filled');
+      zone.classList.remove('correct','incorrect');
+      groupedDragged.classList.add('used');
+    });
+    zone.addEventListener('click', () => clearGroupedZone(zone));
+  });
+}
+
+function clearGroupedZone(zone) {
+  const val = zone.dataset.value;
+  if (val) {
+    const bankId = zone.dataset.group === 'restaurant' ? '#restaurantBank' : '#rangeBank';
+    const chip = document.querySelector(`${bankId} .drag-chip[data-value="${CSS.escape(val)}"]`);
+    if (chip) chip.classList.remove('used');
+  }
+  delete zone.dataset.value;
+  zone.textContent = 'Drop response here';
+  zone.classList.remove('filled','correct','incorrect');
+}
+
+function checkGroupedCloze() {
+  const restaurant = document.querySelector('.restaurant-zone');
+  const range = document.querySelector('.range-zone');
+  const r1 = restaurant.dataset.value === 'Restaurant 2';
+  const r2 = range.dataset.value === 'lower';
+  restaurant.classList.toggle('correct', r1);
+  restaurant.classList.toggle('incorrect', !r1);
+  range.classList.toggle('correct', r2);
+  range.classList.toggle('incorrect', !r2);
+  document.getElementById('groupedClozeFeedback').textContent = (r1 && r2)
+    ? 'Correct. Restaurant 2 is more consistent because its range of delivery times is lower.'
+    : 'Check both blanks and try again.';
+}
+
+function resetGroupedCloze() {
+  document.querySelectorAll('.grouped-dropzone').forEach(clearGroupedZone);
+  document.getElementById('groupedClozeFeedback').textContent = '';
+}
+
+setupGroupedCloze();
+
+/* ===== functionality-section-2 ===== */
+function openTab(evt,id){
+ document.querySelectorAll('.lesson-tab').forEach(x=>x.classList.remove('active'));
+ document.querySelectorAll('.master-tabs .tablink').forEach(x=>x.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ evt.currentTarget.classList.add('active');
+ window.scrollTo({top:document.querySelector('.master-tabs').offsetTop,behavior:'smooth'});
+}
+
+/* ===== functionality-section-3 ===== */
+let dragged = null;
+let draggedType = null;
+
+function setupDnD() {
+  document.querySelectorAll('.drag-chip').forEach(chip => {
+    chip.addEventListener('dragstart', e => {
+      dragged = chip;
+      draggedType = chip.classList.contains('match-chip') ? 'match' : 'cloze';
+      e.dataTransfer.setData('text/plain', chip.dataset.value);
+    });
+  });
+
+  document.querySelectorAll('.match-dropzone').forEach(zone => {
+    zone.addEventListener('dragover', e => e.preventDefault());
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!dragged || draggedType !== 'match') return;
+      placeChip(zone, dragged);
+    });
+    zone.addEventListener('click', () => clearZone(zone));
+  });
+
+  document.querySelectorAll('.cloze-dropzone').forEach(zone => {
+    zone.addEventListener('dragover', e => e.preventDefault());
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!dragged || draggedType !== 'cloze') return;
+      placeChip(zone, dragged);
+    });
+    zone.addEventListener('click', () => clearZone(zone));
+  });
+}
+
+function placeChip(zone, chip) {
+  if (zone.dataset.value) {
+    const old = document.querySelector(`.drag-chip[data-value="${CSS.escape(zone.dataset.value)}"]`);
+    if (old) old.classList.remove('used');
+  }
+  zone.dataset.value = chip.dataset.value;
+  zone.textContent = chip.dataset.value;
+  zone.classList.add('filled');
+  zone.classList.remove('correct','incorrect');
+  chip.classList.add('used');
+}
+
+function clearZone(zone) {
+  const val = zone.dataset.value;
+  if (val) {
+    const pool = zone.classList.contains('match-dropzone') ? '#matchBank' : '#clozeBank';
+    const chip = document.querySelector(`${pool} .drag-chip[data-value="${CSS.escape(val)}"]`);
+    if (chip) chip.classList.remove('used');
+  }
+  delete zone.dataset.value;
+  zone.textContent = zone.classList.contains('match-dropzone') ? 'Drop range here' : 'Drop response here';
+  zone.classList.remove('filled','correct','incorrect');
+}
+
+const matchKey = ["100", "56", "77", "82"];
+function checkMatch() {
+  const zones = [...document.querySelectorAll('.match-dropzone')];
+  let all = true;
+  zones.forEach((z,i) => {
+    const ok = z.dataset.value === String(matchKey[i]);
+    z.classList.toggle('correct',ok);
+    z.classList.toggle('incorrect',!ok);
+    if (!ok) all = false;
+  });
+  document.getElementById('matchFeedback').textContent = all
+    ? 'Correct. The ranges are 100, 56, 77, and 82; the second data set has the smallest range.'
+    : 'Check the range for each data set and try again.';
+}
+
+function resetMatch() {
+  document.querySelectorAll('.match-dropzone').forEach(clearZone);
+  document.getElementById('matchFeedback').textContent='';
+}
+
+const clozeKey = ["Restaurant 2", "5", "9"];
+function checkCloze() {
+  const zones = [...document.querySelectorAll('.cloze-dropzone')];
+  let all = true;
+  zones.forEach((z,i) => {
+    const ok = z.dataset.value === String(clozeKey[i]);
+    z.classList.toggle('correct',ok);
+    z.classList.toggle('incorrect',!ok);
+    if (!ok) all = false;
+  });
+  document.getElementById('clozeFeedback').textContent = all
+    ? 'Correct. Restaurant 2 has a range of 5 minutes; Restaurant 1 has a range of 9 minutes.'
+    : 'Check the restaurant and both ranges, then try again.';
+}
+
+function resetCloze() {
+  document.querySelectorAll('.cloze-dropzone').forEach(clearZone);
+  document.getElementById('clozeFeedback').textContent='';
+}
+
+setupDnD();
+
+/* ===== functionality-section-4 ===== */
+const rangeOrderKey = ["{37, 19, 40, 54, 75, 68}", "{324, 318, 367, 312, 389, 337}", "{148, 145, 117, 148, 199, 172}", "{50, 30, 10, 0, 80, 100}"];
+const rangeOrderInitial = ["{50, 30, 10, 0, 80, 100}", "{37, 19, 40, 54, 75, 68}", "{324, 318, 367, 312, 389, 337}", "{148, 145, 117, 148, 199, 172}"];
+let rangeDragged = null;
+
+function setupRangeOrder() {
+  const list = document.getElementById('rangeOrderList');
+  if (!list) return;
+  list.querySelectorAll('li').forEach(li => {
+    li.addEventListener('dragstart', e => {
+      rangeDragged = li;
+      li.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    li.addEventListener('dragend', () => {
+      li.classList.remove('dragging');
+      rangeDragged = null;
+    });
+    li.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (!rangeDragged || rangeDragged === li) return;
+      const rect = li.getBoundingClientRect();
+      const after = e.clientY > rect.top + rect.height / 2;
+      list.insertBefore(rangeDragged, after ? li.nextSibling : li);
+    });
+  });
+}
+
+function checkRangeOrder() {
+  const list = document.getElementById('rangeOrderList');
+  const rows = [...list.querySelectorAll('li')];
+  let all = true;
+  rows.forEach((li,i) => {
+    const ok = li.dataset.value === rangeOrderKey[i];
+    li.classList.toggle('correct', ok);
+    li.classList.toggle('incorrect', !ok);
+    if (!ok) all = false;
+  });
+  document.getElementById('rangeOrderFeedback').textContent = all
+    ? 'Correct. The ranges, from smallest to greatest, are 56, 77, 82, and 100.'
+    : 'Not yet. Calculate each range, then arrange the data sets from smallest to greatest range.';
+}
+
+function resetRangeOrder() {
+  const list = document.getElementById('rangeOrderList');
+  list.innerHTML = '';
+  rangeOrderInitial.forEach(v => {
+    const li = document.createElement('li');
+    li.draggable = true;
+    li.dataset.value = v;
+    li.innerHTML = '<span class="handle">☰</span>' + v;
+    list.appendChild(li);
+  });
+  document.getElementById('rangeOrderFeedback').textContent = '';
+  setupRangeOrder();
+}
+
+setupRangeOrder();
+
+/* ===== functionality-section-5 ===== */
+/* ---------- Item 4: Match List ---------- */
+let item4Dragged = null;
+document.querySelectorAll('#item4Bank .chip').forEach(chip => {
+  chip.addEventListener('dragstart', e => { item4Dragged = chip; });
+});
+document.querySelectorAll('.item4-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => e.preventDefault());
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!item4Dragged) return;
+    if (zone.dataset.value) {
+      const old = document.querySelector(`#item4Bank .chip[data-value="${CSS.escape(zone.dataset.value)}"]`);
+      if (old) old.classList.remove('used');
+    }
+    zone.dataset.value = item4Dragged.dataset.value;
+    zone.textContent = item4Dragged.textContent;
+    zone.classList.add('filled');
+    zone.classList.remove('correct','incorrect');
+    item4Dragged.classList.add('used');
+  });
+  zone.addEventListener('click', () => clearItem4Zone(zone));
+});
+function clearItem4Zone(zone) {
+  const val = zone.dataset.value;
+  if (val) {
+    const chip = document.querySelector(`#item4Bank .chip[data-value="${CSS.escape(val)}"]`);
+    if (chip) chip.classList.remove('used');
+  }
+  delete zone.dataset.value;
+  zone.textContent = 'Drop here';
+  zone.classList.remove('filled','correct','incorrect');
+}
+function checkItem4() {
+  const zones = document.querySelectorAll('.item4-zone');
+  let all = true;
+  zones.forEach(z => {
+    const ok = z.dataset.value === z.dataset.key;
+    z.classList.toggle('correct', ok);
+    z.classList.toggle('incorrect', !ok);
+    if (!ok) all = false;
+  });
+  document.getElementById('item4Feedback').textContent = all
+    ? 'Correct. Group A: 35.4 minutes, Group B: 33.6 minutes.'
+    : 'Not yet. Recalculate each mean and try again.';
+}
+function resetItem4() {
+  document.querySelectorAll('.item4-zone').forEach(clearItem4Zone);
+  document.getElementById('item4Feedback').textContent = '';
+}
+
+/* ---------- Item 5: Order List ---------- */
+const medianOrderKey = ["D","B","C","A"];
+const medianOrderLabels = {
+  A: "Set A: {1, 6, 15, 7, 15, 18, 14}",
+  B: "Set B: {8, 20, 13, 14, 12, 9}",
+  C: "Set C: {11, 15, 16, 8, 12, 14}",
+  D: "Set D: {1, 10, 8, 29, 14, 17, 3}"
+};
+let medianDragged = null;
+function setupMedianOrder() {
+  const list = document.getElementById('medianOrderList');
+  list.querySelectorAll('li').forEach(li => {
+    li.addEventListener('dragstart', () => { medianDragged = li; li.classList.add('dragging'); });
+    li.addEventListener('dragend', () => { li.classList.remove('dragging'); medianDragged = null; });
+    li.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (!medianDragged || medianDragged === li) return;
+      const rect = li.getBoundingClientRect();
+      const after = e.clientY > rect.top + rect.height / 2;
+      list.insertBefore(medianDragged, after ? li.nextSibling : li);
+    });
+  });
+}
+function checkMedianOrder() {
+  const list = document.getElementById('medianOrderList');
+  const rows = [...list.querySelectorAll('li')];
+  let all = true;
+  rows.forEach((li,i) => {
+    const ok = li.dataset.value === medianOrderKey[i];
+    li.classList.toggle('correct', ok);
+    li.classList.toggle('incorrect', !ok);
+    if (!ok) all = false;
+  });
+  document.getElementById('medianOrderFeedback').textContent = all
+    ? 'Correct. Medians, low to high: D (10), B (12.5), C (13), A (14).'
+    : 'Not yet. Calculate each median, then arrange the sets from lowest to highest.';
+}
+function resetMedianOrder() {
+  const list = document.getElementById('medianOrderList');
+  list.innerHTML = '';
+  ["A","B","C","D"].forEach(v => {
+    const li = document.createElement('li');
+    li.draggable = true;
+    li.dataset.value = v;
+    li.innerHTML = '<span class="handle">☰</span>' + medianOrderLabels[v];
+    list.appendChild(li);
+  });
+  document.getElementById('medianOrderFeedback').textContent = '';
+  setupMedianOrder();
+}
+setupMedianOrder();
+
+/* ---------- Item 11: Cloze Association ---------- */
+let item11Dragged = null;
+document.querySelectorAll('#item11Bank .chip').forEach(chip => {
+  chip.addEventListener('dragstart', () => { item11Dragged = chip; });
+});
+document.querySelectorAll('.item11-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => e.preventDefault());
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!item11Dragged) return;
+    if (zone.dataset.value) {
+      const old = document.querySelector(`#item11Bank .chip[data-value="${CSS.escape(zone.dataset.value)}"]`);
+      if (old) old.classList.remove('used');
+    }
+    zone.dataset.value = item11Dragged.dataset.value;
+    zone.textContent = item11Dragged.dataset.value;
+    zone.classList.add('filled');
+    zone.classList.remove('correct','incorrect');
+    item11Dragged.classList.add('used');
+  });
+  zone.addEventListener('click', () => clearItem11Zone(zone));
+});
+function clearItem11Zone(zone) {
+  const val = zone.dataset.value;
+  if (val) {
+    const chip = document.querySelector(`#item11Bank .chip[data-value="${CSS.escape(val)}"]`);
+    if (chip) chip.classList.remove('used');
+  }
+  delete zone.dataset.value;
+  zone.textContent = 'Drop here';
+  zone.classList.remove('filled','correct','incorrect');
+}
+function checkItem11() {
+  const zones = document.querySelectorAll('.item11-zone');
+  let all = true;
+  zones.forEach(z => {
+    const ok = z.dataset.value === z.dataset.key;
+    z.classList.toggle('correct', ok);
+    z.classList.toggle('incorrect', !ok);
+    if (!ok) all = false;
+  });
+  document.getElementById('item11Feedback').textContent = all
+    ? 'Correct. Team 1 range = 17, Team 2 range = 9.'
+    : 'Not yet. Recalculate each range and try again.';
+}
+function resetItem11() {
+  document.querySelectorAll('.item11-zone').forEach(clearItem11Zone);
+  document.getElementById('item11Feedback').textContent = '';
+}
+
+/* ---------- Item 12: Graphing ---------- */
+const item12Correct = ["21","22"];
+document.querySelectorAll('#item12points circle').forEach(pt => {
+  pt.addEventListener('click', () => {
+    pt.classList.toggle('selected');
+    pt.setAttribute('fill', pt.classList.contains('selected') ? '#0c5b91' : '#cbd5df');
+    updateItem12Readout();
+  });
+});
+function updateItem12Readout() {
+  const selected = [...document.querySelectorAll('#item12points circle.selected')]
+    .map(pt => Number(pt.dataset.val))
+    .sort((a,b) => a-b);
+  document.getElementById('item12Lowest').textContent = selected.length ? selected[0] : '—';
+  document.getElementById('item12Highest').textContent = selected.length ? selected[selected.length-1] : '—';
+}
+function checkItem12() {
+  const pts = document.querySelectorAll('#item12points circle');
+  let all = true;
+  pts.forEach(pt => {
+    const shouldBeSelected = item12Correct.includes(pt.dataset.val);
+    const isSelected = pt.classList.contains('selected');
+    const ok = shouldBeSelected === isSelected;
+    if (!ok) all = false;
+    if (shouldBeSelected) pt.setAttribute('fill', ok ? '#4caf50' : '#ef9a9a');
+    else if (isSelected) pt.setAttribute('fill', '#ef9a9a');
+  });
+  document.getElementById('item12Feedback').textContent = all
+    ? 'Correct. The lowest value in common is 21 mpg; the highest value in common is 22 mpg.'
+    : 'Not yet. Select only the values that appear in both dot plots.';
+}
+function resetItem12() {
+  document.querySelectorAll('#item12points circle').forEach(pt => {
+    pt.classList.remove('selected');
+    pt.setAttribute('fill', '#cbd5df');
+  });
+  updateItem12Readout();
+  document.getElementById('item12Feedback').textContent = '';
+}
+
+/* ===== final-complete-functionality-js ===== */
+(function(){
+function byItem(id){
+  return [...document.querySelectorAll('section.item,.unit-test-tab .card,.lesson-tab .card')].find(c=>{
+    const h=c.querySelector('.item-title,.title,.head');
+    return h && h.textContent.includes(id);
+  });
+}
+function revisedSide(card){
+  const sides=card.querySelectorAll(':scope > .compare > .side, :scope > .grid > .col');
+  return sides.length?sides[sides.length-1]:card;
+}
+function addButtonBox(root, checkFn, resetFn, label='Check Answer'){
+  if(root.querySelector('.final-q04-actions')) return;
+  const box=document.createElement('div'); box.className='actions final-q04-actions';
+  const b1=document.createElement('button');b1.type='button';b1.textContent=label;b1.onclick=checkFn;
+  const b2=document.createElement('button');b2.type='button';b2.className='secondary';b2.textContent='Reset';b2.onclick=resetFn;
+  box.append(b1,b2); root.appendChild(box);
+}
+function enhanceCompareQ04(){
+  const card=byItem('MA.7.0128_Q04'); if(!card)return;
+  const root=revisedSide(card); const parts=root.querySelectorAll('.part'); if(parts.length<2)return;
+
+  // Part A — selected response
+  const partA=parts[0];
+  const labels=[...partA.querySelectorAll('label.choice')];
+  labels.forEach((lab,i)=>{
+    const txt=lab.textContent.replace(/^○\s*/,'').trim();
+    lab.textContent=''; lab.className='q04-radio-option';
+    const inp=document.createElement('input'); inp.type='radio'; inp.name='compare_q04_partA'; inp.value=String(i);
+    const span=document.createElement('span');span.textContent=txt; lab.append(inp,span);
+  });
+  let fbA=document.createElement('div');fbA.className='q04-feedback';partA.appendChild(fbA);
+  addButtonBox(partA,()=>{
+    const selected=partA.querySelector('input:checked'); const ok=selected&&selected.value==='0';
+    partA.querySelectorAll('.q04-radio-option').forEach(x=>{
+      const inp=x.querySelector('input');x.classList.toggle('good',inp.checked&&inp.value==='0');x.classList.toggle('bad',inp.checked&&inp.value!=='0');
+    });
+    fbA.textContent=ok?'Correct. Group A has both a higher mean and a higher median than Group B.':'Check the measures of center and try again.';
+  },()=>{
+    partA.querySelectorAll('input').forEach(x=>x.checked=false);partA.querySelectorAll('.q04-radio-option').forEach(x=>x.classList.remove('good','bad'));fbA.textContent='';
+  },'Check Part A');
+
+  // Part B — Classification
+  const partB=parts[1], oldBank=partB.querySelector('.bank'), oldCols=partB.querySelector('.cols');
+  if(!oldBank || !oldCols) return;
+  const labelsB=[...oldBank.querySelectorAll('.chip')].map(x=>x.textContent.trim());
+  const correct=[0,1,0,1]; // A,B,A,B
+  const bank=document.createElement('div');bank.className='q04-class-bank';
+  const grid=document.createElement('div');grid.className='q04-class-grid';
+  ['Student Group A','Student Group B'].forEach((name,ci)=>{
+    const z=document.createElement('div');z.className='q04-class-zone';z.dataset.col=ci;
+    const hd=document.createElement('div');hd.className='q04-class-head';hd.textContent=name;z.appendChild(hd);
+    z.addEventListener('dragover',e=>e.preventDefault());
+    z.addEventListener('drop',e=>{e.preventDefault();const id=e.dataTransfer.getData('text/plain');const chip=partB.querySelector('[data-q04-chip="'+CSS.escape(id)+'"]');if(chip)z.appendChild(chip)});
+    grid.appendChild(z);
+  });
+  labelsB.forEach((txt,i)=>{
+    const c=document.createElement('div');c.className='q04-class-chip';c.draggable=true;c.textContent=txt;c.dataset.q04Chip=String(i);
+    c.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',String(i)));bank.appendChild(c);
+  });
+  bank.addEventListener('dragover',e=>e.preventDefault());
+  bank.addEventListener('drop',e=>{e.preventDefault();const id=e.dataTransfer.getData('text/plain');const chip=partB.querySelector('[data-q04-chip="'+CSS.escape(id)+'"]');if(chip)bank.appendChild(chip)});
+  oldBank.replaceWith(bank);oldCols.replaceWith(grid);
+  const fbB=document.createElement('div');fbB.className='q04-feedback';partB.appendChild(fbB);
+  addButtonBox(partB,()=>{
+    let good=0;
+    partB.querySelectorAll('.q04-class-chip').forEach(c=>{
+      const idx=Number(c.dataset.q04Chip), zone=c.closest('.q04-class-zone');
+      const ok=zone&&Number(zone.dataset.col)===correct[idx];c.classList.toggle('good',ok);c.classList.toggle('bad',!ok);if(ok)good++;
+    });
+    fbB.textContent=good===4?'Correct. Group A: range 77 seconds and greater variability. Group B: range 22 seconds and less variability.':good+' of 4 responses correct.';
+  },()=>{
+    partB.querySelectorAll('.q04-class-chip').forEach(c=>{c.classList.remove('good','bad');bank.appendChild(c)});fbB.textContent='';
+  },'Check Part B');
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  enhanceCompareQ04();
+
+  // Ensure every static matrix has actual radio controls even if earlier enhancement scripts fail.
+  document.querySelectorAll('table.matrix').forEach((table,ti)=>{
+    [...table.rows].slice(1).forEach((row,ri)=>{
+      [...row.cells].slice(1).forEach((cell,ci)=>{
+        if(!cell.querySelector('input')){
+          cell.textContent='';
+          const inp=document.createElement('input');inp.type='radio';
+          inp.name='fallback_mx_'+ti+'_'+ri;inp.value=table.rows[0].cells[ci+1].textContent.trim();
+          cell.appendChild(inp);
+        }
+      });
+    });
+  });
+});
+})();
+
+/* ===== classification-functionality-fixed-js ===== */
+(function(){
+const CLASS_CONFIG = {
+  'MA.7.0122_Q05': {
+    key: {
+      'all customers who bought the new coffee':'Population',
+      '50 randomly selected customers who bought the new coffee':'Sample',
+      'customers who did not buy the new coffee':'Neither',
+      'the first 10 employees who arrived at the coffee shop':'Neither'
+    }
+  },
+  'MA.7.0124_Q05': {
+    key: {
+      'testing the last 4,000 bulbs in the production line':'Not Likely Valid Inference',
+      'testing the first 2,000 light bulbs in the production line':'Not Likely Valid Inference',
+      'retesting 100 light bulbs that have already been tested':'Not Likely Valid Inference',
+      'testing every fiftieth light bulb in the production line':'Likely Valid Inference'
+    }
+  },
+  'MA.7.0123_Q07': {
+    key: {
+      '400 randomly chosen employees from the list of all employees':'Valid Sample',
+      'all 624 female employees in the company':'Biased Sample',
+      'all employees who have worked in the company for 5 years or more':'Biased Sample',
+      'a group with one member from each department':'Biased Sample'
+    }
+  },
+  'MA.7.0130_Q06': {
+    key: {
+      'The range of goals scored is 17.':'Lacrosse Team 1',
+      'The range of goals scored is 9.':'Lacrosse Team 2',
+      "This team's goals scored are more consistent.":'Lacrosse Team 2',
+      "This team's goals scored are less consistent.":'Lacrosse Team 1'
+    }
+  }
+};
+
+function itemId(card){
+  const h=card.querySelector('.item-title,.title');
+  const m=h ? h.textContent.match(/MA\.7\.\d+_Q\d+/) : null;
+  return m ? m[0] : '';
+}
+function revisedRoot(card){
+  const sides=card.querySelectorAll(':scope > .compare > .side, :scope > .grid > .col');
+  return sides.length ? sides[sides.length-1] : card;
+}
+function addPlaceholder(zone){
+  if(zone.querySelector('.fixed-class-chip')) return;
+  zone.innerHTML='<div class="fixed-class-placeholder">Drop response here</div>';
+}
+function clearPlaceholder(zone){
+  const p=zone.querySelector('.fixed-class-placeholder'); if(p) p.remove();
+}
+function initClassification(card){
+  const id=itemId(card), cfg=CLASS_CONFIG[id]; if(!cfg) return;
+  const root=revisedRoot(card);
+  const grids=[...root.querySelectorAll('.class-grid')];
+  if(!grids.length) return;
+
+  grids.forEach((grid,gi)=>{
+    // In multipart item 11, only enhance the classification part, not Part A.
+    const part=grid.closest('.part') || root;
+    let bank=[...part.querySelectorAll('.classification-bank,.bank')].find(b=>b.querySelector('.chip'));
+    if(!bank) return;
+    const originalChips=[...bank.querySelectorAll('.chip')].filter(c=>cfg.key[c.textContent.trim()]);
+    if(!originalChips.length) return;
+
+    bank.classList.add('fixed-class-bank');
+    bank.dataset.fixedBank=id+'_'+gi;
+    originalChips.forEach((chip,i)=>{
+      chip.classList.add('fixed-class-chip');
+      chip.draggable=true;
+      chip.dataset.fixedKey=id+'_'+gi+'_'+i;
+      chip.dataset.fixedText=chip.textContent.trim();
+      chip.addEventListener('dragstart',e=>{
+        e.dataTransfer.setData('text/plain',chip.dataset.fixedKey);
+        e.dataTransfer.effectAllowed='move';
+      });
+    });
+
+    bank.addEventListener('dragover',e=>e.preventDefault());
+    bank.addEventListener('drop',e=>{
+      e.preventDefault();
+      const k=e.dataTransfer.getData('text/plain');
+      const chip=part.querySelector('[data-fixed-key="'+CSS.escape(k)+'"]');
+      if(chip){chip.classList.remove('good','bad');bank.appendChild(chip);refreshZones();}
+    });
+
+    const zones=[...grid.querySelectorAll('.class-drop,.drop')];
+    zones.forEach(zone=>{
+      const head=zone.closest('.class-col')?.querySelector('.class-head');
+      zone.dataset.category=head ? head.textContent.trim() : '';
+      zone.classList.add('fixed-class-zone');
+      zone.innerHTML=''; addPlaceholder(zone);
+      zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});
+      zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+      zone.addEventListener('drop',e=>{
+        e.preventDefault();zone.classList.remove('drag-over');
+        const k=e.dataTransfer.getData('text/plain');
+        const chip=part.querySelector('[data-fixed-key="'+CSS.escape(k)+'"]');
+        if(chip){clearPlaceholder(zone);chip.classList.remove('good','bad');zone.appendChild(chip);refreshZones();}
+      });
+    });
+
+    function refreshZones(){zones.forEach(z=>{if(z.querySelector('.fixed-class-chip')) clearPlaceholder(z); else addPlaceholder(z);});}
+
+    // Remove any previous generic controls in this classification part/root to avoid duplicates.
+    [...part.querySelectorAll('.tei-actions')].forEach(x=>x.remove());
+    const actions=document.createElement('div');actions.className='fixed-class-actions';
+    const check=document.createElement('button');check.type='button';check.textContent='Check Answer';
+    const reset=document.createElement('button');reset.type='button';reset.className='secondary';reset.textContent='Reset';
+    const fb=document.createElement('span');fb.className='fixed-class-feedback';
+    actions.append(check,reset,fb); part.appendChild(actions);
+
+    check.addEventListener('click',()=>{
+      let good=0,total=originalChips.length;
+      originalChips.forEach(chip=>{
+        const expected=cfg.key[chip.dataset.fixedText];
+        const actual=chip.closest('.fixed-class-zone')?.dataset.category || '';
+        const ok=actual===expected;
+        chip.classList.toggle('good',ok);chip.classList.toggle('bad',!ok);if(ok)good++;
+      });
+      fb.textContent=good===total?'Correct! All responses are correct.':good+' of '+total+' responses correct.';
+    });
+    reset.addEventListener('click',()=>{
+      originalChips.forEach(chip=>{chip.classList.remove('good','bad');bank.appendChild(chip);});
+      fb.textContent='';refreshZones();
+    });
+  });
+}
+
+// Repair generic matrix and dropdown functionality that depended on the malformed script.
+function answerText(card){const a=card.querySelector('.correct-answer-embedded');return a?a.textContent.replace(/^Correct Answer:\s*/i,'').trim():'';}
+function initMatrixAndDropdown(card){
+  const root=revisedRoot(card); const id=itemId(card);
+  const matrices=[...root.querySelectorAll('table.matrix')];
+  matrices.forEach((table,ti)=>{
+    const rows=[...table.rows].slice(1); let expected=[];
+    const key=(table.parentElement.querySelector('.key')?.textContent||answerText(card));
+    const m=key.match(/Answer pattern:\s*([^\n]+)/i);
+    if(m && /TRUE|FALSE/i.test(m[1])) expected=(m[1].match(/TRUE|FALSE/gi)||[]).map(x=>x.toLowerCase());
+    if(!expected.length && id==='MA.7.0129_Q06') expected=['more than 2 points','more than 2 points','2 points or less','2 points or less'];
+    if(!expected.length && id==='MA.7.0128_Q08') expected=['company b','company a'];
+    rows.forEach((row,ri)=>{
+      [...row.cells].slice(1).forEach((cell,ci)=>{
+        if(!cell.querySelector('input')){cell.textContent='';const r=document.createElement('input');r.type='radio';r.name='fixed_mx_'+id+'_'+ti+'_'+ri;r.value=table.rows[0].cells[ci+1].textContent.trim();cell.appendChild(r);}
+      });
+    });
+    table.dataset.fixedExpected=JSON.stringify(expected);
+  });
+
+  const selects=[...root.querySelectorAll('select')];
+  if(!matrices.length && !selects.length) return;
+  // Do not add generic controls when item has its own explicit functioning controls.
+  if(root.querySelector('.actions') || root.querySelector('.fixed-class-actions')) return;
+  const box=document.createElement('div');box.className='tei-actions';
+  box.innerHTML='<button type="button">Check Answer</button><button type="button" class="secondary">Reset</button><span class="tei-feedback"></span>';
+  root.appendChild(box);const fb=box.querySelector('.tei-feedback');
+  box.children[0].onclick=()=>{
+    let total=0,good=0;const ans=answerText(card).toLowerCase();
+    selects.forEach(s=>{
+      const opts=[...s.options].filter(o=>!/^(select|choose)/i.test(o.text.trim()));
+      const hits=opts.filter(o=>ans.includes(o.text.trim().toLowerCase())).sort((a,b)=>b.text.length-a.text.length);
+      const ex=hits[0]?.text||null;if(!ex)return;total++;const ok=s.options[s.selectedIndex]?.text===ex;s.classList.toggle('tei-correct',ok);s.classList.toggle('tei-incorrect',!ok);if(ok)good++;
+    });
+    matrices.forEach(t=>{const exp=JSON.parse(t.dataset.fixedExpected||'[]');[...t.rows].slice(1).forEach((r,i)=>{if(!exp[i])return;total++;const checked=r.querySelector('input:checked');const ok=checked&&checked.value.trim().toLowerCase()===exp[i];[...r.cells].slice(1).forEach(c=>c.classList.remove('correct-cell','incorrect-cell'));if(checked)checked.closest('td').classList.add(ok?'correct-cell':'incorrect-cell');if(ok)good++;});});
+    fb.textContent=total?(good===total?'Correct! All responses are correct.':good+' of '+total+' responses correct.'):'Complete the interaction, then check again.';
+    fb.className='tei-feedback '+(good===total&&total?'ok':'bad');
+  };
+  box.children[1].onclick=()=>{selects.forEach(s=>{s.selectedIndex=0;s.classList.remove('tei-correct','tei-incorrect');});matrices.forEach(t=>{t.querySelectorAll('input').forEach(x=>x.checked=false);t.querySelectorAll('td').forEach(c=>c.classList.remove('correct-cell','incorrect-cell'));});fb.textContent='';};
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('section.item,.unit-test-tab .card').forEach(card=>{initClassification(card);initMatrixAndDropdown(card);});
+});
+})();</script><script>
+/* Collapsible Master Assessment Tracking Table */
+(function(){
+  const toggle = document.getElementById('trackingToggle');
+  const panel = document.getElementById('trackingPanel');
+  if(!toggle || !panel) return;
+
+  toggle.addEventListener('click', function(){
+    const isOpen = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', String(!isOpen));
+    panel.hidden = isOpen;
+  });
+})();
+</script>
+</body></html>
